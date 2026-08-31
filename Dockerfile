@@ -16,6 +16,6 @@ COPY src src
 RUN ./mvnw clean package -DskipTests
 
 
-CMD ["java", "-Dserver.port=${PORT:-8080}", "-jar", "target/power-city-platform-1.0.0.jar"]
+CMD ["java", "-jar", "target/power-city-platform-1.0.0.jar"]
 
-EXPOSE ${PORT:-8080}
+EXPOSE 8080
