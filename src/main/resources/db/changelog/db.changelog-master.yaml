@@ -38,19 +38,58 @@ databaseChangeLog:
   - include:
       file: db/changelog/migrations/seed-pbs-payment-007.xml
 
-  # Drop outdated Hibernate-generated check constraint on roles.name
-  # that doesn't include newer enum values like NATIONAL_LEADER
+  # Make users.last_name nullable (single display name support)
   - include:
-      file: db/changelog/migrations/drop-roles-name-constraint-008.xml
+      file: db/changelog/migrations/alter-users-last-name-nullable-008.xml
 
-  # Add ticket_type and ticket_price columns to events table
+  # Create role_permissions table and seed admin/coordinator permissions
   - include:
-      file: db/changelog/migrations/add-ticket-price-to-events-009.xml
+      file: db/changelog/migrations/seed-role-permissions-009.xml
 
-  # Create travel_forms table and seed TRAVEL form template
+  # Migrate roles from database enum to string-backed roles
   - include:
-      file: db/changelog/migrations/create-travel-forms-table-010.xml
+      file: db/changelog/migrations/migrate-roles-to-string-010.xml
 
-  # Create child_dedications table for child dedication certificates
+  # Seed super admin permissions and fix permission columns
   - include:
-      file: db/changelog/migrations/create-child-dedications-table-011.xml
+      file: db/changelog/migrations/seed-super-admin-permissions-011.xml
+
+  # Add created_by_admin column to users
+  - include:
+      file: db/changelog/migrations/add-created-by-admin-012.xml
+
+  # Add archived flag to form submissions (archive abandoned Stripe submissions)
+  - include:
+      file: db/changelog/migrations/add-archived-form-submissions-013.xml
+
+  # Seed EVENTS form permission
+  - include:
+      file: db/changelog/migrations/seed-events-permission-014.xml
+
+  # Seed monthly report form template
+  - include:
+      file: db/changelog/migrations/seed-monthly-report-form-015.xml
+
+  # Update monthly report form fields
+  - include:
+      file: db/changelog/migrations/update-monthly-report-form-016.xml
+
+  # Drop redundant report tables
+  - include:
+      file: db/changelog/migrations/drop-redundant-report-tables-017.xml
+
+  # Rename user names columns to full_name
+  - include:
+      file: db/changelog/migrations/rename-user-names-to-fullname-018.xml
+
+  # Relax course category constraints
+  - include:
+      file: db/changelog/migrations/relax-course-category-019.xml
+
+  # Drop course category check constraint
+  - include:
+      file: db/changelog/migrations/drop-course-category-check-020.xml
+
+  # Drop lesson duration check constraint
+  - include:
+      file: db/changelog/migrations/drop-lesson-duration-check-021.xml

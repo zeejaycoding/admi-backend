@@ -55,10 +55,12 @@ spring:
         order_updates: true
 
   # Liquibase Configuration
-  # JPA Hibernate handles schema creation via ddl-auto: update
-  # Liquibase is used ONLY for data seeding and complex schema updates
+  # DISABLED: JPA Hibernate handles schema creation via ddl-auto: update and
+  # DataInitializer seeds roles/super-admin. Liquibase migrations assume tables
+  # already exist (and were written against an evolving dev DB), so they break a
+  # fresh database bootstrap. See Liquibase blockers during fresh deploy.
   liquibase:
-    enabled: true
+    enabled: false
     change-log: classpath:db/changelog/db.changelog-master.yaml
     drop-first: false
 
