@@ -53,28 +53,35 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeSuperAdmin() {
-        String superAdminEmail = "it@drabeldamina.org";
+        // Multiple super-admin accounts are seeded so admins can log in across
+        // environments regardless of which database (local vs deployed) is fresh.
+        String[] superAdminEmails = {
+                "it@drabeldamina.org",
+                "admiglobalit@gmail.com"
+        };
 
-        if (userRepository.findByEmail(superAdminEmail).isEmpty()) {
-            Role superAdminRole = roleRepository.findByName("SUPER_ADMIN")
-                    .orElseThrow(() -> new RuntimeException("SUPER_ADMIN role not found"));
+        for (String superAdminEmail : superAdminEmails) {
+            if (userRepository.findByEmail(superAdminEmail).isEmpty()) {
+                Role superAdminRole = roleRepository.findByName("SUPER_ADMIN")
+                        .orElseThrow(() -> new RuntimeException("SUPER_ADMIN role not found"));
 
-            User superAdmin = new User();
-            superAdmin.setEmail(superAdminEmail);
-            superAdmin.setPassword(passwordEncoder.encode("Pciglobal@28$"));
-            superAdmin.setFullName("Super Admin");
-            superAdmin.setIsActive(true);
-            superAdmin.setIsEmailVerified(true);
+                User superAdmin = new User();
+                superAdmin.setEmail(superAdminEmail);
+                superAdmin.setPassword(passwordEncoder.encode("Pciglobal@28$"));
+                superAdmin.setFullName("Super Admin");
+                superAdmin.setIsActive(true);
+                superAdmin.setIsEmailVerified(true);
 
-            User savedUser = userRepository.save(superAdmin);
+                User savedUser = userRepository.save(superAdmin);
 
-            UserRole userRole = new UserRole();
-            userRole.setUser(savedUser);
-            userRole.setRole(superAdminRole);
-            userRole.setIsActive(true);
-            userRoleRepository.save(userRole);
+                UserRole userRole = new UserRole();
+                userRole.setUser(savedUser);
+                userRole.setRole(superAdminRole);
+                userRole.setIsActive(true);
+                userRoleRepository.save(userRole);
 
-            System.out.println("Created super admin user: " + superAdminEmail);
+                System.out.println("Created super admin user: " + superAdminEmail);
+            }
         }
     }
 }
