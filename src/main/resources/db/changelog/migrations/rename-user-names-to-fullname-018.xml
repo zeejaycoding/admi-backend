@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="rename-user-names-to-fullname-018" author="claude" failOnError="false">
+        <!-- 1. Add full_name column (nullable first so we can backfill) -->
+        <addColumn tableName="users">
+            <column name="full_name" type="VARCHAR(255)"/>
+        </addColumn>
+
+        <!-- 2. Backfill full_name from first_name + last_name -->
+        <sql>
+            UPDATE users
+            SET full_name = TRIM(CONCAT(first_name, ' ', COALESCE(last_name, '')))
+            WHERE full_name IS NULL;
+        </sql>
+
+        <!-- 3. Enforce NOT NULL now that data is populated -->
+        <addNotNullConstraint tableName="users" columnName="full_name" columnDataType="VARCHAR(255)"/>
+
+        <!-- 4. Keep legacy first_name / last_name columns as a backup (NOT dropped).
+             New users only populate full_name, so relax first_name's NOT NULL constraint
+             so inserts that don't set it still succeed. -->
+        <dropNotNullConstraint tableName="users" columnName="first_name" columnDataType="VARCHAR(255)"/>
+    </changeSet>
+
+</databaseChangeLog>

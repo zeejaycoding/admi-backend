@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New ADOMA Registration — Stripe Payment Confirmed</title>
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #1a1a1a; margin: 0; padding: 0; background: #f5f5f5; }
+        .container { max-width: 560px; margin: 0 auto; padding: 32px 24px; }
+        .logo { max-width: 140px; height: auto; margin-bottom: 24px; }
+        table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+        td { padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+        td:first-child { color: #6b7280; width: 40%; }
+        .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 13px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <img th:src="'cid:logo'" alt="Power City International" class="logo" />
+
+    <p><strong>New ADOMA Registration — Stripe Payment Confirmed</strong></p>
+
+    <p>A new registration has been successfully paid for the <strong>Abel Damina Mentoring Academy</strong> via Stripe. Payment has been confirmed — send the registrant their Zoom link.</p>
+
+    <p><strong>Registrant Details</strong></p>
+    <table>
+        <tr>
+            <td>Name</td>
+            <td th:text="${firstName + ' ' + lastName}">John Doe</td>
+        </tr>
+        <tr>
+            <td>Email</td>
+            <td th:text="${registrantEmail != null ? registrantEmail : 'Not provided'}">email@example.com</td>
+        </tr>
+        <tr>
+            <td>Phone</td>
+            <td th:text="${phone != null ? phone : 'Not provided'}">+1...</td>
+        </tr>
+        <tr>
+            <td>Plan</td>
+            <td th:text="${planLabel != null ? planLabel : 'N/A'}">Full Year Payment</td>
+        </tr>
+        <tr>
+            <td>Amount Paid</td>
+            <td th:text="${currencySymbol + #numbers.formatDecimal(amount, 0, 'COMMA', 2, 'POINT') + ' ' + currency}">$200.00 USD</td>
+        </tr>
+        <tr>
+            <td>Payment Method</td>
+            <td>Stripe</td>
+        </tr>
+    </table>
+
+    <p>Payment is confirmed. Please send the Zoom link to <strong th:text="${registrantEmail}">email@example.com</strong>.</p>
+
+    <div class="footer">
+        <p>&copy; <span th:text="${currentYear}">2026</span> Power City International</p>
+        <p>Automated notification from the ADMI Platform.</p>
+    </div>
+</div>
+</body>
+</html>

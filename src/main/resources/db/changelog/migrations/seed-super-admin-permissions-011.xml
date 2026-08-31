@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="011-seed-super-admin-permissions" author="system">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM role_permissions WHERE role_name = 'SUPER_ADMIN'
+            </sqlCheck>
+        </preConditions>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_OVERVIEW',    NOW(), NOW());</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_USERS',       NOW(), NOW());</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_CAMPUSES',    NOW(), NOW());</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_BOOKS',       NOW(), NOW());</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_COURSES',     NOW(), NOW());</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_ORDERS',      NOW(), NOW());</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_PAYMENTS',    NOW(), NOW());</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_FORMS',       NOW(), NOW());</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_SUBMISSIONS', NOW(), NOW());</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_REPORTS',     NOW(), NOW());</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_MANAGEMENT',  NOW(), NOW());</sql>
+    </changeSet>
+
+    <!-- Fix existing seeded permissions that used old role_type column name (now role_name) -->
+    <changeSet id="011-fix-admin-permissions-column" author="system" failOnError="false">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM role_permissions WHERE role_name = 'ADMIN'
+            </sqlCheck>
+        </preConditions>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('ADMIN', 'MENU_CAMPUSES',    NOW(), NOW()) ON CONFLICT DO NOTHING;</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('ADMIN', 'MENU_SUBMISSIONS', NOW(), NOW()) ON CONFLICT DO NOTHING;</sql>
+    </changeSet>
+
+    <changeSet id="011-fix-coordinator-permissions-column" author="system" failOnError="false">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM role_permissions WHERE role_name = 'COORDINATOR'
+            </sqlCheck>
+        </preConditions>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('COORDINATOR', 'MENU_REPORTS', NOW(), NOW()) ON CONFLICT DO NOTHING;</sql>
+    </changeSet>
+
+</databaseChangeLog>

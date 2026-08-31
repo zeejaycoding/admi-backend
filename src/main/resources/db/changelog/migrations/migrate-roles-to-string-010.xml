@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!--
+        Drop any Hibernate-generated enum check constraint on roles.name.
+        splitStatements="false" is required for dollar-quoted DO blocks in Liquibase.
+    -->
+    <changeSet id="010-drop-roles-name-check-constraint" author="system" failOnError="false">
+        <sql splitStatements="false">
+            DO $body$
+            DECLARE r RECORD;
+            BEGIN
+                FOR r IN
+                    SELECT conname FROM pg_constraint
+                    WHERE conrelid = 'roles'::regclass AND contype = 'c'
+                LOOP
+                    EXECUTE 'ALTER TABLE roles DROP CONSTRAINT IF EXISTS ' || quote_ident(r.conname);
+                END LOOP;
+            END $body$;
+        </sql>
+    </changeSet>
+
+    <!--
+        Rename role_type → role_name in role_permissions.
+        Drops whatever unique constraint Hibernate created (unknown name),
+        renames the column, then recreates the constraint with a known name.
+        splitStatements="false" lets the DO block run as a single unit.
+    -->
+    <changeSet id="010-rename-role-type-to-role-name" author="system">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="role_permissions" columnName="role_type"/>
+        </preConditions>
+        <sql splitStatements="false">
+            DO $body$
+            DECLARE r RECORD;
+            BEGIN
+                FOR r IN
+                    SELECT conname FROM pg_constraint
+                    WHERE conrelid = 'role_permissions'::regclass
+                      AND contype IN ('u', 'p')
+                      AND conname NOT IN (
+                          SELECT conname FROM pg_constraint
+                          WHERE conrelid = 'role_permissions'::regclass AND contype = 'p'
+                      )
+                LOOP
+                    EXECUTE 'ALTER TABLE role_permissions DROP CONSTRAINT IF EXISTS ' || quote_ident(r.conname);
+                END LOOP;
+            END $body$;
+
+            ALTER TABLE role_permissions RENAME COLUMN role_type TO role_name;
+
+            ALTER TABLE role_permissions
+                ADD CONSTRAINT uq_role_permissions_name_key UNIQUE (role_name, permission_key);
+        </sql>
+    </changeSet>
+
+    <!-- Widen roles.name to VARCHAR(100) to allow arbitrary strings -->
+    <changeSet id="010-widen-roles-name-column" author="system" failOnError="false">
+        <modifyDataType tableName="roles" columnName="name" newDataType="VARCHAR(100)"/>
+    </changeSet>
+
+    <!-- Drop any Hibernate enum check constraint on the renamed role_name column -->
+    <changeSet id="010-drop-role-permissions-check-constraint" author="system" failOnError="false">
+        <sql splitStatements="false">
+            DO $body$
+            DECLARE r RECORD;
+            BEGIN
+                FOR r IN
+                    SELECT conname FROM pg_constraint
+                    WHERE conrelid = 'role_permissions'::regclass AND contype = 'c'
+                LOOP
+                    EXECUTE 'ALTER TABLE role_permissions DROP CONSTRAINT IF EXISTS ' || quote_ident(r.conname);
+                END LOOP;
+            END $body$;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

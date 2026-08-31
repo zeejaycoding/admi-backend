@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="seed-adoma-payment-006" author="claude" failOnError="false">
+        <comment>Enable payment for Abel Damina Mentoring Academy — USD via Stripe (NGN handled via bank transfer on frontend)</comment>
+        <update tableName="forms">
+            <column name="requires_payment" valueBoolean="true"/>
+            <column name="payment_amount" valueNumeric="200.00"/>
+            <column name="payment_currency" value="USD"/>
+            <column name="payment_gateway" value="STRIPE"/>
+            <column name="payment_description" value="Abel Damina Mentoring Academy Registration"/>
+            <where>event_code = 'ABEL_DAMINA_MENTORING_ACADEMY'</where>
+        </update>
+        <rollback>
+            <update tableName="forms">
+                <column name="requires_payment" valueBoolean="false"/>
+                <column name="payment_amount" valueNumeric="0"/>
+                <column name="payment_currency" value="USD"/>
+                <column name="payment_gateway" valueComputed="NULL"/>
+                <column name="payment_description" valueComputed="NULL"/>
+                <where>event_code = 'ABEL_DAMINA_MENTORING_ACADEMY'</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="seed-ministry-forms-003" author="claude" failOnError="false">
+        <comment>Seed Form records for the 5 ministry forms (Power Bible School, ADMA, Discipleship, New Coordinators, Join Campus)</comment>
+
+        <!-- Power Bible School -->
+        <insert tableName="forms">
+            <column name="title" value="Power Bible School"/>
+            <column name="description" value="Deepen your understanding of God's Word through our structured Bible school curriculum — available online via Zoom."/>
+            <column name="form_schema" value='{"_meta":{"type":"MINISTRY_FORM","formType":"POWER_BIBLE_SCHOOL"}}'/>
+            <column name="event_code" value="POWER_BIBLE_SCHOOL"/>
+            <column name="require_authentication" valueBoolean="false"/>
+            <column name="is_published" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="requires_payment" valueBoolean="false"/>
+            <column name="submission_count" valueNumeric="0"/>
+            <column name="created_at" valueDate="now()"/>
+            <column name="updated_at" valueDate="now()"/>
+        </insert>
+
+        <!-- Abel Damina Mentoring Academy -->
+        <insert tableName="forms">
+            <column name="title" value="Abel Damina Mentoring Academy"/>
+            <column name="description" value="Develop leadership skills and receive guidance from experienced ministry leaders through structured mentoring sessions."/>
+            <column name="form_schema" value='{"_meta":{"type":"MINISTRY_FORM","formType":"ABEL_DAMINA_MENTORING_ACADEMY"}}'/>
+            <column name="event_code" value="ABEL_DAMINA_MENTORING_ACADEMY"/>
+            <column name="require_authentication" valueBoolean="false"/>
+            <column name="is_published" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="requires_payment" valueBoolean="false"/>
+            <column name="submission_count" valueNumeric="0"/>
+            <column name="created_at" valueDate="now()"/>
+            <column name="updated_at" valueDate="now()"/>
+        </insert>
+
+        <!-- Discipleship Program -->
+        <insert tableName="forms">
+            <column name="title" value="Discipleship Program"/>
+            <column name="description" value="Grow in your faith through our comprehensive discipleship program designed to build strong foundations in Christ."/>
+            <column name="form_schema" value='{"_meta":{"type":"MINISTRY_FORM","formType":"DISCIPLESHIP_PROGRAM"}}'/>
+            <column name="event_code" value="DISCIPLESHIP_PROGRAM"/>
+            <column name="require_authentication" valueBoolean="false"/>
+            <column name="is_published" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="requires_payment" valueBoolean="false"/>
+            <column name="submission_count" valueNumeric="0"/>
+            <column name="created_at" valueDate="now()"/>
+            <column name="updated_at" valueDate="now()"/>
+        </insert>
+
+        <!-- New Coordinators Registration -->
+        <insert tableName="forms">
+            <column name="title" value="New Coordinators Registration"/>
+            <column name="description" value="Apply to become a Power City campus coordinator in your community."/>
+            <column name="form_schema" value='{"_meta":{"type":"MINISTRY_FORM","formType":"NEW_COORDINATORS_REGISTRATION"}}'/>
+            <column name="event_code" value="NEW_COORDINATORS_REGISTRATION"/>
+            <column name="require_authentication" valueBoolean="false"/>
+            <column name="is_published" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="requires_payment" valueBoolean="false"/>
+            <column name="submission_count" valueNumeric="0"/>
+            <column name="created_at" valueDate="now()"/>
+            <column name="updated_at" valueDate="now()"/>
+        </insert>
+
+        <!-- Join A Campus -->
+        <insert tableName="forms">
+            <column name="title" value="Join A Campus"/>
+            <column name="description" value="Submit a request to join a Power City International campus near you."/>
+            <column name="form_schema" value='{"_meta":{"type":"MINISTRY_FORM","formType":"JOIN_CAMPUS"}}'/>
+            <column name="event_code" value="JOIN_CAMPUS"/>
+            <column name="require_authentication" valueBoolean="false"/>
+            <column name="is_published" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="requires_payment" valueBoolean="false"/>
+            <column name="submission_count" valueNumeric="0"/>
+            <column name="created_at" valueDate="now()"/>
+            <column name="updated_at" valueDate="now()"/>
+        </insert>
+
+        <rollback>
+            <delete tableName="forms">
+                <where>event_code IN ('POWER_BIBLE_SCHOOL','ABEL_DAMINA_MENTORING_ACADEMY','DISCIPLESHIP_PROGRAM','NEW_COORDINATORS_REGISTRATION','JOIN_CAMPUS')</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

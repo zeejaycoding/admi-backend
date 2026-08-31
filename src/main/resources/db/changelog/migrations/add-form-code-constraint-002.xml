@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Fix Partnership form - remove eventCode since it has formCode -->
+    <changeSet id="fix-partnership-form-eventcode-002" author="claude">
+        <sql>
+            UPDATE forms 
+            SET event_code = NULL 
+            WHERE form_code = 'PARTNERSHIP';
+        </sql>
+    </changeSet>
+
+    <!-- Add check constraint to ensure formCode and eventCode are mutually exclusive -->
+    <changeSet id="add-form-code-mutual-exclusion-constraint-002" author="claude">
+        <!-- Skip if the constraint already exists (e.g. database previously migrated under an older changelog) -->
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM pg_constraint
+                WHERE conname = 'chk_form_code_mutual_exclusion'
+                  AND conrelid = 'forms'::regclass
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE forms 
+            ADD CONSTRAINT chk_form_code_mutual_exclusion 
+            CHECK (
+                (form_code IS NOT NULL AND event_code IS NULL) OR
+                (form_code IS NULL AND event_code IS NOT NULL) OR
+                (form_code IS NULL AND event_code IS NULL)
+            );
+        </sql>
+        <rollback>
+            ALTER TABLE forms DROP CONSTRAINT IF EXISTS chk_form_code_mutual_exclusion;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!--
+      Hibernate generated CHECK (duration_seconds >= 1) from the old @Min(1). Duration is now
+      auto-detected and may legitimately be 0 (unknown), so @Min was relaxed to 0. ddl-auto:update
+      never drops the old constraint, so remove it explicitly.
+    -->
+    <changeSet id="drop-lesson-duration-check-021" author="claude" failOnError="false">
+        <sql>ALTER TABLE course_lessons DROP CONSTRAINT IF EXISTS course_lessons_duration_seconds_check;</sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Create role_permissions table — skip if Hibernate already created it via ddl-auto -->
+    <changeSet id="009-create-role-permissions-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="role_permissions"/></not>
+        </preConditions>
+        <comment>Create role_permissions table for dynamic menu access control</comment>
+        <createTable tableName="role_permissions">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="role_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_key" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="created_by" type="BIGINT"/>
+            <column name="updated_by" type="BIGINT"/>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="role_permissions"
+                columnNames="role_type, permission_key"
+                constraintName="uq_role_permissions"/>
+    </changeSet>
+
+    <!-- Seed ADMIN permissions — skip if already seeded -->
+    <changeSet id="009-seed-admin-permissions" author="system">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM role_permissions WHERE role_type = 'ADMIN'
+            </sqlCheck>
+        </preConditions>
+        <sql>INSERT INTO role_permissions (role_type, permission_key, created_at, updated_at) VALUES ('ADMIN', 'MENU_CAMPUSES', NOW(), NOW());</sql>
+        <sql>INSERT INTO role_permissions (role_type, permission_key, created_at, updated_at) VALUES ('ADMIN', 'MENU_SUBMISSIONS', NOW(), NOW());</sql>
+    </changeSet>
+
+    <!-- Seed COORDINATOR permissions — skip if already seeded -->
+    <changeSet id="009-seed-coordinator-permissions" author="system">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM role_permissions WHERE role_type = 'COORDINATOR'
+            </sqlCheck>
+        </preConditions>
+        <sql>INSERT INTO role_permissions (role_type, permission_key, created_at, updated_at) VALUES ('COORDINATOR', 'MENU_REPORTS', NOW(), NOW());</sql>
+    </changeSet>
+
+</databaseChangeLog>

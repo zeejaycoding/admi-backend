@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="seed-pbs-payment-007" author="claude" failOnError="false">
+        <comment>Enable payment for Power Bible School — USD via Stripe (NGN handled via bank transfer on frontend). Online: $300/₦300k, On-site Uyo: $100/₦100k (overrideAmount used per attendance type)</comment>
+        <update tableName="forms">
+            <column name="requires_payment" valueBoolean="true"/>
+            <column name="payment_amount" valueNumeric="300.00"/>
+            <column name="payment_currency" value="USD"/>
+            <column name="payment_gateway" value="STRIPE"/>
+            <column name="payment_description" value="Power Bible School Registration Fee"/>
+            <where>event_code = 'POWER_BIBLE_SCHOOL'</where>
+        </update>
+        <rollback>
+            <update tableName="forms">
+                <column name="requires_payment" valueBoolean="false"/>
+                <column name="payment_amount" valueNumeric="0"/>
+                <column name="payment_currency" value="USD"/>
+                <column name="payment_gateway" valueComputed="NULL"/>
+                <column name="payment_description" valueComputed="NULL"/>
+                <where>event_code = 'POWER_BIBLE_SCHOOL'</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="add-form-codes-001" author="claude">
+        <!-- Skip if the columns already exist (e.g. database previously migrated under an older changelog) -->
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <not><columnExists tableName="forms" columnName="form_code"/></not>
+                <not><columnExists tableName="forms" columnName="event_code"/></not>
+            </and>
+        </preConditions>
+
+        <comment>Add form_code and event_code columns to forms table for different form usage types</comment>
+
+        <!-- Add form_code column for page-based forms (e.g., PARTNERSHIP) -->
+        <addColumn tableName="forms">
+            <column name="form_code" type="VARCHAR(50)">
+                <constraints nullable="true" unique="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add event_code column for program/event-based forms -->
+        <addColumn tableName="forms">
+            <column name="event_code" type="VARCHAR(50)">
+                <constraints nullable="true" unique="true"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="forms" columnName="form_code"/>
+            <dropColumn tableName="forms" columnName="event_code"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Update existing Partnership form with form_code -->
+    <changeSet id="update-partnership-form-code-001" author="claude">
+        <comment>Set form_code for existing Partnership form</comment>
+
+        <sql>
+            UPDATE forms
+            SET form_code = 'PARTNERSHIP'
+            WHERE id = (
+                SELECT id
+                FROM forms
+                WHERE title LIKE '%Partnership%'
+                AND form_code IS NULL
+                LIMIT 1
+            );
+        </sql>
+
+        <rollback>
+            <sql>
+                UPDATE forms
+                SET form_code = NULL
+                WHERE form_code = 'PARTNERSHIP';
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Remove show_donation_prompt column (moved to frontend logic) -->
+    <changeSet id="remove-show-donation-prompt-001" author="claude">
+        <!-- Skip if the column was never created -->
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="forms" columnName="show_donation_prompt"/>
+        </preConditions>
+
+        <comment>Remove show_donation_prompt column as it's now handled by frontend modal</comment>
+
+        <dropColumn tableName="forms" columnName="show_donation_prompt"/>
+
+        <rollback>
+            <addColumn tableName="forms">
+                <column name="show_donation_prompt" type="BOOLEAN" defaultValueBoolean="false">
+                    <constraints nullable="true"/>
+                </column>
+            </addColumn>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${formTitle + ' - Confirmation'}">Registration Confirmation</title>
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #1a1a1a; margin: 0; padding: 0; background: #f5f5f5; }
+        .container { max-width: 560px; margin: 0 auto; padding: 32px 24px; }
+        .logo { max-width: 140px; height: auto; margin-bottom: 24px; }
+        table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+        td { padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+        td:first-child { color: #6b7280; width: 45%; }
+        .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 13px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <img th:src="'cid:logo'" alt="Power City International" class="logo" />
+
+    <p>Hello <span th:text="${firstName}">there</span>,</p>
+
+    <p>Thank you for submitting <strong th:text="${formTitle}">this form</strong>. Your response has been recorded.</p>
+
+    <p th:if="${successMessage != null and !successMessage.isEmpty()}" th:text="${successMessage}">Thank you for your submission.</p>
+
+    <div th:if="${requiresPayment}">
+        <p><strong>Payment Summary</strong></p>
+        <table>
+            <tr>
+                <td>Form</td>
+                <td th:text="${formTitle}">Form Title</td>
+            </tr>
+            <tr>
+                <td>Amount Paid</td>
+                <td>
+                    <span th:text="${currencySymbol}">$</span><span th:text="${paymentAmount}">0.00</span><span th:text="${' ' + paymentCurrency}"> USD</span>
+                </td>
+            </tr>
+            <tr>
+                <td>Payment Status</td>
+                <td>Completed</td>
+            </tr>
+        </table>
+    </div>
+
+    <p>Our team will review your submission and reach out if we need anything further. Please keep this email as your confirmation.</p>
+
+    <p>If you have any questions, email <a th:href="'mailto:' + ${contactEmail}" th:text="${contactEmail}">it@drabeldamina.org</a>
+        or visit <a href="https://admi.drabeldamina.org/">admi.drabeldamina.org</a>.</p>
+
+    <p>God bless you,<br>The Power City International Team</p>
+
+    <div class="footer">
+        <p>&copy; <span th:text="${currentYear}">2026</span> Power City International</p>
+        <p>This confirmation was sent to <span th:text="${email}">user@example.com</span> because you submitted <strong th:text="${formTitle}">this form</strong>.</p>
+    </div>
+</div>
+</body>
+</html>

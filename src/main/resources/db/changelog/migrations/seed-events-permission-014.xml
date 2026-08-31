@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Grant the MENU_EVENTS sidebar permission to the admin roles for the salvaged Events feature -->
+    <changeSet id="014-seed-events-permission" author="system" failOnError="false">
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('SUPER_ADMIN', 'MENU_EVENTS', NOW(), NOW()) ON CONFLICT DO NOTHING;</sql>
+        <sql>INSERT INTO role_permissions (role_name, permission_key, created_at, updated_at) VALUES ('ADMIN', 'MENU_EVENTS', NOW(), NOW()) ON CONFLICT DO NOTHING;</sql>
+    </changeSet>
+
+</databaseChangeLog>

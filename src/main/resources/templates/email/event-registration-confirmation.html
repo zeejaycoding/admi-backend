@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Registration Confirmation - Power City International</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+        .logo { max-width: 150px; height: auto; }
+        .content { padding: 30px; }
+        .button { display: inline-block; background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+        .event-details { background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .event-info { border-left: 4px solid #667eea; padding-left: 15px; margin: 15px 0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666; }
+        .calendar-section { background: #e8f5e8; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center; }
+        .reminder-section { background: #fff3cd; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .date-time { font-size: 18px; font-weight: bold; color: #667eea; }
+        .location { font-size: 16px; color: #666; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img th:src="'cid:logo'" alt="Power City International" class="logo" />
+        <h1>Event Registration Confirmation</h1>
+        <p>You're successfully registered!</p>
+    </div>
+
+    <div class="content">
+        <h2>Hello <span th:text="${firstName}">User</span>!</h2>
+
+        <p>Great news! You have successfully registered for <strong th:text="${eventName}">Event Name</strong>. We're excited to have you join us for this special event.</p>
+
+        <div class="event-details">
+            <h3>Event Details</h3>
+            <p><strong>Event:</strong> <span th:text="${eventName}">Event Name</span></p>
+            <p><strong>Date & Time:</strong> <span class="date-time" th:text="${eventDate}">Event Date</span></p>
+            <p><strong>Location:</strong> <span class="location" th:text="${location}">Event Location</span></p>
+            <p><strong>Registration Date:</strong> <span th:text="${#dates.format(#dates.createNow(), 'EEEE, MMMM d, yyyy')}">Today</span></p>
+        </div>
+
+        <div class="event-info">
+            <h3>What to Expect</h3>
+            <p>This event promises to be an inspiring and enriching experience. Come prepared to learn, connect, and grow with our community.</p>
+        </div>
+
+        <div class="calendar-section">
+            <h3>📅 Add to Calendar</h3>
+            <p>Don't forget to mark your calendar! Click the button below to view event details:</p>
+            <a th:href="${eventLink}" class="button">View Event Details</a>
+            <p><small>You can also access your registered events from your account dashboard.</small></p>
+        </div>
+
+        <div class="reminder-section">
+            <h3>🔔 Event Reminders</h3>
+            <p>We'll send you a reminder 24 hours before the event. You can also:</p>
+            <ul>
+                <li>Set your own reminders on your calendar</li>
+                <li>Check event updates on our website</li>
+                <li>Connect with other attendees</li>
+                <li>Prepare questions or topics for discussion</li>
+            </ul>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3>Event Preparation</h3>
+            <ul>
+                <li>✅ Arrive 15 minutes early to check in</li>
+                <li>✅ Bring a notebook for taking notes</li>
+                <li>✅ Come with an open mind and heart</li>
+                <li>✅ Be ready to connect with others</li>
+                <li>✅ Check the weather and dress appropriately</li>
+            </ul>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3>What to Bring</h3>
+            <ul>
+                <li>Bible and notebook</li>
+                <li>Comfortable clothing</li>
+                <li>Positive attitude and enthusiasm</li>
+                <li>Questions or topics for discussion</li>
+            </ul>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3>Need to Make Changes?</h3>
+            <p>If you need to modify your registration or have any questions:</p>
+            <ul>
+                <li>Email: events@powercityinternational.org</li>
+                <li>Phone: +1 (555) 123-4567</li>
+                <li>Visit our events page: <a th:href="${frontendUrl + '/events'}">Events</a></li>
+            </ul>
+        </div>
+
+        <p>We look forward to seeing you at the event!</p>
+        <p>Blessings,<br>The Power City International Team</p>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2025 Power City International. All rights reserved.</p>
+        <p>Region: <span th:text="${region}">UK</span> | Event: <span th:text="${eventName}">Event Name</span></p>
+        <p>This email was sent to <span th:text="${email}">user@example.com</span></p>
+    </div>
+</div>
+</body>
+</html>

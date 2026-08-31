@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!--
+      Drop the legacy structured-report tables. Reports are now captured as submissions
+      of the "Monthly Report" dynamic form, so these tables (and their Java entities,
+      which have been removed) are redundant.
+    -->
+    <changeSet id="drop-redundant-report-tables-017" author="claude" failOnError="false">
+        <sql>DROP TABLE IF EXISTS report_receipts CASCADE;</sql>
+        <sql>DROP TABLE IF EXISTS report_expenses CASCADE;</sql>
+        <sql>DROP TABLE IF EXISTS reports CASCADE;</sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!--
+      Hibernate auto-generated a CHECK constraint (category IN (enum names...)) back when
+      courses.category was an @Enumerated column. ddl-auto:update never drops it, so the
+      now free-text category is still rejected for any value outside the old enum. Drop it.
+    -->
+    <changeSet id="drop-course-category-check-020" author="claude" failOnError="false">
+        <sql>ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_category_check;</sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,12 @@
+package com.powercity.power_city_platform.enums;
+
+public enum OfferingType {
+    WORSHIP_OFFERING,
+    HONOUR_OFFERING,
+    ADOMA_HONOUR_OFFERING,
+    DISCIPLESHIP_HONOUR_OFFERING,
+    PBS_HONOUR_OFFERING,
+    PARTNERSHIP_OFFERING,
+    MISSION_OFFERING,
+    MEDIA_OFFERING
+}

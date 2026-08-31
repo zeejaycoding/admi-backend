@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <!-- ============================================================================
+         INITIAL DATA SEEDING
+         Seeds essential data required for application startup:
+         1. System roles (SUPER_ADMIN, ADMIN, COORDINATOR, USER, STUDENT, CUSTOMER)
+         2. Default super admin user (admiglobalit@gmail.com)
+
+         NOTE: This runs AFTER Hibernate creates tables (via ddl-auto: update)
+         Each changeset runs ONLY ONCE per database (tracked in databasechangelog table)
+         ============================================================================ -->
+
+    <!-- Seed System Roles -->
+    <changeSet id="seed-001-insert-roles" author="admin" failOnError="false">
+        <validCheckSum>ANY</validCheckSum>
+        <!-- Skip (and record as run) if the roles are already seeded, so this stops re-attempting every boot. -->
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM roles WHERE name = 'SUPER_ADMIN'</sqlCheck>
+        </preConditions>
+        <comment>Insert all system roles required by RoleType enum</comment>
+
+        <insert tableName="roles">
+            <column name="name" value="SUPER_ADMIN"/>
+            <column name="description" value="Super Administrator with full system access"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="now()"/>
+        </insert>
+
+        <insert tableName="roles">
+            <column name="name" value="ADMIN"/>
+            <column name="description" value="Administrator with elevated privileges"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="now()"/>
+        </insert>
+
+        <insert tableName="roles">
+            <column name="name" value="COORDINATOR"/>
+            <column name="description" value="Campus coordinator with regional management access"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="now()"/>
+        </insert>
+
+        <insert tableName="roles">
+            <column name="name" value="USER"/>
+            <column name="description" value="Standard user with basic access"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="now()"/>
+        </insert>
+
+        <insert tableName="roles">
+            <column name="name" value="STUDENT"/>
+            <column name="description" value="Student with course enrollment access"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="now()"/>
+        </insert>
+
+        <insert tableName="roles">
+            <column name="name" value="CUSTOMER"/>
+            <column name="description" value="Customer with purchase access"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_at" valueDate="now()"/>
+        </insert>
+
+        <rollback>
+            <delete tableName="roles">
+                <where>name IN ('SUPER_ADMIN', 'ADMIN', 'COORDINATOR', 'USER', 'STUDENT', 'CUSTOMER')</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <!-- Seed Default Super Admin User -->
+    <changeSet id="seed-002-insert-super-admin-user" author="admin" failOnError="false">
+        <validCheckSum>ANY</validCheckSum>
+        <!-- Skip (and record as run) if the admin already exists, so this stops re-attempting every boot. -->
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM users WHERE email = 'admiglobalit@gmail.com'</sqlCheck>
+        </preConditions>
+        <comment>Insert default super admin user: admiglobalit@gmail.com</comment>
+
+        <!-- BCrypt hash for password: Pciglobal@28$ -->
+        <!-- Generated using BCrypt (htpasswd -B) -->
+        <insert tableName="users">
+            <column name="email" value="admiglobalit@gmail.com"/>
+            <column name="password" value="$2y$05$a6JyN8UESCWdagiJSwnmAeqAFJ60HrKcH64xlwVn8tcybTOABgSDy"/>
+            <column name="full_name" value="Super Admin"/>
+            <column name="first_name" value="Super"/>
+            <column name="last_name" value="Admin"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="is_email_verified" valueBoolean="true"/>
+            <column name="created_at" valueDate="now()"/>
+        </insert>
+
+        <rollback>
+            <delete tableName="users">
+                <where>email = 'admiglobalit@gmail.com'</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <!-- Link Super Admin User to SUPER_ADMIN Role -->
+    <changeSet id="seed-003-assign-super-admin-role" author="admin" failOnError="false">
+        <comment>Assign SUPER_ADMIN role to default admin user</comment>
+
+        <sql>
+            INSERT INTO user_roles (user_id, role_id, is_active, created_at)
+            SELECT u.id, r.id, true, NOW()
+            FROM users u, roles r
+            WHERE u.email = 'admiglobalit@gmail.com'
+            AND r.name = 'SUPER_ADMIN'
+            AND NOT EXISTS (
+                SELECT 1 FROM user_roles ur
+                WHERE ur.user_id = u.id AND ur.role_id = r.id
+            )
+        </sql>
+
+        <rollback>
+            <sql>
+                DELETE FROM user_roles
+                WHERE user_id = (SELECT id FROM users WHERE email = 'admiglobalit@gmail.com')
+                AND role_id = (SELECT id FROM roles WHERE name = 'SUPER_ADMIN')
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

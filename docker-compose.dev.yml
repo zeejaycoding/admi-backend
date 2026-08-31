@@ -1,0 +1,36 @@
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: powercity-postgres-dev
+    environment:
+      POSTGRES_DB: powercity_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5433:5432" 
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - powercity-network
+
+  # MailDev for email testing
+  maildev:
+    image: maildev/maildev:latest
+    container_name: powercity-maildev
+    ports:
+      - "1080:1080"  # Web interface
+      - "1025:1025"  # SMTP server
+    environment:
+      MAILDEV_WEB_PORT: 1080
+      MAILDEV_SMTP_PORT: 1025
+    networks:
+      - powercity-network
+
+volumes:
+  postgres_data:
+
+networks:
+  powercity-network:
+    driver: bridge

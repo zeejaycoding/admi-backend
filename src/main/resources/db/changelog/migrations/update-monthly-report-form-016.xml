@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!--
+      Bring the seeded Monthly Report form to its authoritative state (description +
+      the "Offering Balance" computed field). Runs on databases where the earlier
+      version of the form was already seeded by changeset 015.
+    -->
+    <changeSet id="update-monthly-report-form-016" author="claude" failOnError="false">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM forms WHERE form_code = 'MONTHLY_REPORT'
+            </sqlCheck>
+        </preConditions>
+        <sql><![CDATA[
+UPDATE forms
+SET description = 'PCI Coordinator monthly report',
+    form_schema = '{"version":2,"fields":[{"id":"rf_date","type":"date","label":"Report Date","order":0,"required":true,"validation":{},"placeholder":""},{"id":"rf_country","type":"text","label":"Country","order":1,"required":true,"validation":{},"placeholder":""},{"id":"rf_leader","type":"text","label":"National Leader","order":2,"required":true,"validation":{},"placeholder":""},{"id":"rf_campus","type":"text","label":"Campus","order":3,"required":true,"validation":{},"placeholder":""},{"id":"rf_coordinator","type":"text","label":"Coordinator","order":4,"required":true,"validation":{},"placeholder":""},{"id":"rf_partnership","type":"number","label":"Partnership Income","order":5,"required":false,"validation":{},"placeholder":""},{"id":"rf_papa","type":"number","label":"Papa Honour","order":6,"required":false,"validation":{},"placeholder":""},{"id":"rf_offerings","type":"number","label":"Offerings","order":7,"required":false,"validation":{},"placeholder":""},{"id":"rf_expenses","type":"repeater","label":"Expenses","order":8,"required":false,"validation":{},"subFields":[{"id":"rf_exp_date","type":"date","label":"Date"},{"id":"rf_exp_desc","type":"text","label":"Description"},{"id":"rf_exp_amt","type":"number","label":"Amount"}],"minRows":1,"addButtonLabel":"Add Expense"},{"id":"rf_receipts","type":"file","label":"Receipts","order":9,"required":false,"validation":{},"acceptedTypes":["image/*",".pdf",".doc",".docx",".xls",".xlsx"],"maxSize":10,"allowMultiple":true},{"id":"rf_balance","type":"computed","label":"Offering Balance","order":10,"required":false,"validation":{},"addFieldIds":["rf_offerings"],"subtractFieldIds":[],"subtractRepeaters":["rf_expenses"],"decimals":2}],"layout":{"rows":[{"id":"rrow_0","fields":["rf_date"],"columns":1,"displayOrder":0},{"id":"rrow_1","fields":["rf_country"],"columns":1,"displayOrder":1},{"id":"rrow_2","fields":["rf_leader"],"columns":1,"displayOrder":2},{"id":"rrow_3","fields":["rf_campus"],"columns":1,"displayOrder":3},{"id":"rrow_4","fields":["rf_coordinator"],"columns":1,"displayOrder":4},{"id":"rrow_5","fields":["rf_partnership"],"columns":1,"displayOrder":5},{"id":"rrow_6","fields":["rf_papa"],"columns":1,"displayOrder":6},{"id":"rrow_7","fields":["rf_offerings"],"columns":1,"displayOrder":7},{"id":"rrow_8","fields":["rf_expenses"],"columns":1,"displayOrder":8},{"id":"rrow_9","fields":["rf_receipts"],"columns":1,"displayOrder":9},{"id":"rrow_10","fields":["rf_balance"],"columns":1,"displayOrder":10}]}}',
+    updated_at = now()
+WHERE form_code = 'MONTHLY_REPORT';
+        ]]></sql>
+    </changeSet>
+
+</databaseChangeLog>

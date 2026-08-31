@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="008-alter-users-last-name-nullable" author="system">
+        <comment>Make last_name column nullable — last name is optional when admin creates a user</comment>
+        <sql>ALTER TABLE users ALTER COLUMN last_name DROP NOT NULL;</sql>
+        <rollback>
+            <sql>UPDATE users SET last_name = '' WHERE last_name IS NULL;
+ALTER TABLE users ALTER COLUMN last_name SET NOT NULL;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

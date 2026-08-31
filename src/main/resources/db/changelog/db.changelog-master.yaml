@@ -1,0 +1,56 @@
+databaseChangeLog:
+  # ============================================================================
+  # NOTE: JPA Hibernate auto-creates all tables via ddl-auto: update
+  # Liquibase is used ONLY for:
+  #   1. Data seeding (roles, default users, etc.)
+  #   2. Complex schema updates that require data transformation
+  # ============================================================================
+
+  # Seed initial data - roles and default super admin user
+  - include:
+      file: db/changelog/migrations/seed-001-initial-data.xml
+
+  # Add form_code and event_code columns for form categorization
+  - include:
+      file: db/changelog/migrations/add-form-codes-001.xml
+
+  # Add constraint for form_code and event_code mutual exclusion
+  - include:
+      file: db/changelog/migrations/add-form-code-constraint-002.xml
+
+  # Seed ministry form records (Power Bible School, ADMA, Discipleship, Coordinators, Join Campus)
+  - include:
+      file: db/changelog/migrations/seed-ministry-forms-003.xml
+
+  # Expand donations offering_type check constraint to include MISSION_OFFERING and MEDIA_OFFERING
+  - include:
+      file: db/changelog/migrations/update-donations-offering-type-constraint-004.xml
+
+  # Expand donations offering_type check constraint to include ADOMA, Discipleship and PBS honour offerings
+  - include:
+      file: db/changelog/migrations/update-donations-offering-type-constraint-005.xml
+
+  # Enable payment on Abel Damina Mentoring Academy form (USD/Stripe; NGN via bank transfer)
+  - include:
+      file: db/changelog/migrations/seed-adoma-payment-006.xml
+
+  # Enable payment on Power Bible School form (USD/Stripe; NGN via bank transfer). Online $300/₦300k, On-site $100/₦100k
+  - include:
+      file: db/changelog/migrations/seed-pbs-payment-007.xml
+
+  # Drop outdated Hibernate-generated check constraint on roles.name
+  # that doesn't include newer enum values like NATIONAL_LEADER
+  - include:
+      file: db/changelog/migrations/drop-roles-name-constraint-008.xml
+
+  # Add ticket_type and ticket_price columns to events table
+  - include:
+      file: db/changelog/migrations/add-ticket-price-to-events-009.xml
+
+  # Create travel_forms table and seed TRAVEL form template
+  - include:
+      file: db/changelog/migrations/create-travel-forms-table-010.xml
+
+  # Create child_dedications table for child dedication certificates
+  - include:
+      file: db/changelog/migrations/create-child-dedications-table-011.xml

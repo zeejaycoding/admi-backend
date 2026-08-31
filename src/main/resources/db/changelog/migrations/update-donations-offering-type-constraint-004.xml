@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="update-donations-offering-type-constraint-004" author="system">
+        <sql>
+            ALTER TABLE donations DROP CONSTRAINT IF EXISTS donations_offering_type_check;
+            ALTER TABLE donations ADD CONSTRAINT donations_offering_type_check
+                CHECK (offering_type IN (
+                    'WORSHIP_OFFERING',
+                    'HONOUR_OFFERING',
+                    'PARTNERSHIP_OFFERING',
+                    'MISSION_OFFERING',
+                    'MEDIA_OFFERING'
+                ));
+        </sql>
+        <rollback>
+            ALTER TABLE donations DROP CONSTRAINT IF EXISTS donations_offering_type_check;
+            ALTER TABLE donations ADD CONSTRAINT donations_offering_type_check
+                CHECK (offering_type IN (
+                    'WORSHIP_OFFERING',
+                    'HONOUR_OFFERING',
+                    'PARTNERSHIP_OFFERING'
+                ));
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

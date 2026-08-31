@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="add-archived-form-submissions-013" author="system">
+        <addColumn tableName="form_submissions">
+            <column name="archived" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="archive-abandoned-stripe-submissions-013b" author="system">
+        <comment>Archive PENDING Stripe submissions where payment was never completed (abandoned checkouts / declined cards)</comment>
+        <sql>
+            UPDATE form_submissions
+            SET archived = TRUE
+            WHERE payment_status = 'PENDING'
+              AND stripe_session_id IS NOT NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

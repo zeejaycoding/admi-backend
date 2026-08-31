@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Child Dedication Certificate - Power City International</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; }
+        .header { background: linear-gradient(135deg, #011A5A 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; }
+        .logo { max-width: 150px; height: auto; }
+        .content { padding: 30px; }
+        .certificate-box { border: 3px solid #011A5A; border-radius: 10px; padding: 25px; text-align: center; margin: 20px 0; }
+        .certificate-box h2 { margin: 0 0 5px 0; color: #011A5A; }
+        .certificate-box .child-name { font-size: 26px; font-weight: bold; font-style: italic; color: #1a1a1a; margin: 10px 0; }
+        .details { background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .details p { margin: 8px 0; }
+        .certificate-number { display: inline-block; background: #011A5A; color: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-top: 10px; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img th:src="'cid:logo'" alt="Power City International" class="logo" />
+        <h1>Child Dedication Certificate</h1>
+    </div>
+
+    <div class="content">
+        <h2>Hello <span th:text="${firstName + ' ' + lastName}">User</span>!</h2>
+
+        <p>We are delighted to share the child dedication certificate for your child. It is a blessing to celebrate this special milestone with your family.</p>
+
+        <div class="certificate-box">
+            <p>This is to certify that</p>
+            <div class="child-name" th:text="${childName}">Child's Full Name</div>
+            <p>was dedicated to the Lord on</p>
+            <p><strong th:text="${dedicationDate}">Dedication Date</strong></p>
+            <p>by Officiating Minister</p>
+            <p><strong th:text="${minister}">Minister</strong></p>
+            <div class="certificate-number" th:text="${certificateNumber}">CDC-00001</div>
+        </div>
+
+        <div class="details">
+            <h3>Certificate Details</h3>
+            <p><strong>Child's Name:</strong> <span th:text="${childName}">Child's Full Name</span></p>
+            <p><strong>Parent/Guardian:</strong> <span th:text="${parentName}">Parent Name</span></p>
+            <p><strong>Dedication Date:</strong> <span th:text="${dedicationDate}">Dedication Date</span></p>
+            <p><strong>Campus:</strong> <span th:text="${campus}">Campus</span></p>
+            <p><strong>Officiating Minister:</strong> <span th:text="${minister}">Minister</span></p>
+            <p><strong>Certificate Number:</strong> <span th:text="${certificateNumber}">CDC-00001</span></p>
+            <p><strong>Status:</strong> <span th:text="${status}">Approved</span></p>
+        </div>
+
+        <p>Thank you for being part of our community. May God continue to bless your child and your family.</p>
+        <p>Blessings,<br>The Power City International Team</p>
+    </div>
+
+    <div class="footer">
+        <p>&copy; <span th:text="${currentYear}">2025</span> Power City International. All rights reserved.</p>
+        <p>This email was sent to <span th:text="${email}">user@example.com</span></p>
+    </div>
+</div>
+</body>
+</html>

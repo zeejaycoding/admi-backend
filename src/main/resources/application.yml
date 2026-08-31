@@ -1,0 +1,196 @@
+spring:
+  application:
+    name: power-city-platform
+
+  # Profile selection
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  # Database Configuration
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${PGUSER:}
+    password: ${PGPASSWORD:}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+
+  # Email Configuration (Mailtrap)
+  mail:
+    host: ${EMAIL_HOST:smtp.mailtrap.io}
+    port: ${EMAIL_PORT:2525}
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: false
+          ssl:
+            trust: "*"
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+        debug: false
+
+  # Common JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 5
+        order_inserts: true
+        order_updates: true
+
+  # Liquibase Configuration
+  # JPA Hibernate handles schema creation via ddl-auto: update
+  # Liquibase is used ONLY for data seeding and complex schema updates
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    drop-first: false
+
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      write-durations-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+    time-zone: UTC
+    default-property-inclusion: non_null
+
+  # File Upload Configuration — course audio (long sermons) can be large.
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 512MB
+      file-size-threshold: 2MB
+      enabled: true
+
+  # Thymeleaf Configuration
+  thymeleaf:
+    cache: true
+    prefix: classpath:/templates/
+    suffix: .html
+    encoding: UTF-8
+
+# Server Configuration
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+  forward-headers-strategy: native
+
+# Management/Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+
+# Application Configuration
+app:
+  name: Power City International Platform
+  version: 1.0.0
+
+  # JWT Configuration
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: 86400000
+    refresh-expiration: 604800000
+
+  # CORS Configuration
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS}
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH,HEAD
+    allowed-headers: "*"
+    allow-credentials: true
+
+  # Email Configuration
+  email:
+    from: ${EMAIL_FROM:noreply@admi.drabeldamina.org}
+    base-url: ${APP_BASE_URL:http://localhost:8080}
+    frontend-url: ${FRONTEND_URL:http://localhost:3000}
+
+  # Security Settings
+  security:
+    require-ssl: ${SECURITY_REQUIRE_SSL:false}
+    csrf-protection: ${SECURITY_CSRF_PROTECTION:false}
+
+  # File Upload Security Configuration
+  upload:
+    security:
+      scan-files: true
+      allowed-mime-types: image/jpeg,image/png,image/gif,image/webp,audio/mpeg,audio/wav,audio/mp4,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      blocked-extensions: exe,bat,cmd,com,pif,scr,vbs,js,jar,sh,ps1,php,asp,jsp
+    image:
+      max-width: 4096
+      max-height: 4096
+
+# AWS S3 Configuration (for PDFs, audio, documents)
+aws:
+  s3:
+    access-key: ${AWS_S3_ACCESS_KEY}
+    secret-key: ${AWS_S3_SECRET_KEY}
+    bucket-name: ${AWS_S3_BUCKET_NAME:powercity-platform-files}
+    region: ${AWS_S3_REGION:us-east-1}
+    # Environment-based folder prefix (dev/ or prod/)
+    folder-prefix: ${AWS_S3_FOLDER_PREFIX:prod/}
+
+# Cloudflare R2 Configuration (course audio only; falls back to S3 when unset)
+r2:
+  endpoint: ${R2_ENDPOINT:}
+  access-key: ${R2_ACCESS_KEY_ID:}
+  secret-key: ${R2_SECRET_ACCESS_KEY:}
+  bucket-name: ${R2_BUCKET_NAME:}
+  region: ${R2_REGION:auto}
+
+# Cloudinary Configuration (for images, videos)
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+  secure: true
+  # Environment-based folder prefix (dev/ or prod/)
+  folder-prefix: ${CLOUDINARY_FOLDER_PREFIX:prod/}
+
+# Payment Configuration
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY}
+  publishable-key: ${STRIPE_PUBLISHABLE_KEY}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+
+payment:
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY}
+    publishable-key: ${STRIPE_PUBLISHABLE_KEY}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+  paypal:
+    client-id: ${PAYPAL_CLIENT_ID}
+    client-secret: ${PAYPAL_CLIENT_SECRET}
+    mode: ${PAYPAL_MODE:sandbox}
+    webhook-id: ${PAYPAL_WEBHOOK_ID:}
