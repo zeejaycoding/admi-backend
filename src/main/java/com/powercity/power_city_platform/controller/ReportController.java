@@ -102,6 +102,7 @@ public class ReportController {
     }
 
     @DeleteMapping("/{id}")
+    @Transactional
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
     @Operation(summary = "Delete report", description = "Delete a report")
     public ResponseEntity<ApiResponse<Void>> deleteReport(@PathVariable Long id) {

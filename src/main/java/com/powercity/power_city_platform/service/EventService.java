@@ -201,17 +201,23 @@ public class EventService {
         return new PageImpl<>(dtos, pageable, eventsPage.getTotalElements());
     }
 
-    // Delete event (soft delete)
+    // Delete event (hard delete)
     public void deleteEvent(Long id, User currentUser) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
         checkEventOwnership(event, currentUser);
 
-        event.setIsActive(false);
-        event.setUpdatedBy(currentUser.getId());
-        event.setUpdatedAt(LocalDateTime.now());
-        eventRepository.save(event);
+        // Best-effort cleanup of the Cloudinary thumbnail
+        if (event.getThumbnailKey() != null && !event.getThumbnailKey().isEmpty()) {
+            try {
+                cloudinaryService.deleteFile(event.getThumbnailKey(), "image");
+            } catch (Exception e) {
+                logger.warn("Failed to delete event thumbnail from Cloudinary: {}", e.getMessage());
+            }
+        }
+
+        eventRepository.delete(event);
     }
 
     // Get event analytics
