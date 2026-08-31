@@ -164,7 +164,7 @@ public class CartService {
     /**
      * Get user's cart
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public CartResponse getCart(User user) {
         Cart cart = getOrCreateCart(user);
         return convertToCartResponse(cart);
