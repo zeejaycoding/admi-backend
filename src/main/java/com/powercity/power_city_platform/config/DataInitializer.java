@@ -1,8 +1,10 @@
 package com.powercity.power_city_platform.config;
 
 import com.powercity.power_city_platform.entity.Role;
+import com.powercity.power_city_platform.entity.RolePermission;
 import com.powercity.power_city_platform.entity.User;
 import com.powercity.power_city_platform.entity.UserRole;
+import com.powercity.power_city_platform.repository.RolePermissionRepository;
 import com.powercity.power_city_platform.repository.RoleRepository;
 import com.powercity.power_city_platform.repository.UserRepository;
 import com.powercity.power_city_platform.repository.UserRoleRepository;
@@ -11,6 +13,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -26,6 +29,9 @@ public class DataInitializer implements CommandLineRunner {
     private UserRoleRepository userRoleRepository;
 
     @Autowired
+    private RolePermissionRepository rolePermissionRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     private static final Map<String, String> DEFAULT_ROLES = Map.of(
@@ -37,9 +43,37 @@ public class DataInitializer implements CommandLineRunner {
         "CUSTOMER",    "Customer with access to e-commerce features"
     );
 
+    // Sidebar menu permissions. Seeded per role because Liquibase (which used to
+    // populate role_permissions) is disabled — see application.yml. Without these,
+    // the admin sidebar renders almost no menu items.
+    private static final List<String> ALL_MENU_PERMISSIONS = List.of(
+            "MENU_OVERVIEW",
+            "MENU_USERS",
+            "MENU_CAMPUSES",
+            "MENU_BOOKS",
+            "MENU_COURSES",
+            "MENU_ORDERS",
+            "MENU_PAYMENTS",
+            "MENU_FORMS",
+            "MENU_SUBMISSIONS",
+            "MENU_REPORTS",
+            "MENU_EVENTS",
+            "MENU_MANAGEMENT"
+    );
+
+    private static final Map<String, List<String>> ROLE_PERMISSIONS = Map.of(
+        "SUPER_ADMIN", ALL_MENU_PERMISSIONS,
+        "ADMIN",       List.of("MENU_CAMPUSES", "MENU_SUBMISSIONS", "MENU_EVENTS"),
+        "COORDINATOR", List.of("MENU_REPORTS"),
+        "USER",        List.of(),
+        "STUDENT",     List.of(),
+        "CUSTOMER",    List.of()
+    );
+
     @Override
     public void run(String... args) throws Exception {
         initializeRoles();
+        initializeRolePermissions();
         initializeSuperAdmin();
     }
 
@@ -48,6 +82,21 @@ public class DataInitializer implements CommandLineRunner {
             if (!roleRepository.existsByName(name)) {
                 roleRepository.save(new Role(name, description));
                 System.out.println("Created role: " + name);
+            }
+        });
+    }
+
+    private void initializeRolePermissions() {
+        ROLE_PERMISSIONS.forEach((roleName, permissionKeys) -> {
+            for (String key : permissionKeys) {
+                // Avoid unique-constraint errors on re-runs.
+                boolean alreadyExists = rolePermissionRepository.findByRoleName(roleName)
+                        .stream()
+                        .anyMatch(rp -> rp.getPermissionKey().equals(key));
+                if (!alreadyExists) {
+                    rolePermissionRepository.save(new RolePermission(roleName, key));
+                    System.out.println("Created permission: " + roleName + " -> " + key);
+                }
             }
         });
     }
