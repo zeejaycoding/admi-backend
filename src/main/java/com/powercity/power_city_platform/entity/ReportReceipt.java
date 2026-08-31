@@ -3,6 +3,7 @@ package com.powercity.power_city_platform.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "report_receipts")
@@ -25,6 +26,11 @@ public class ReportReceipt {
 
     @Column(name = "file_name")
     private String fileName;
+
+    @Lob
+    @JsonIgnore
+    @Column(name = "file_data")
+    private byte[] fileData;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "report_id", nullable = false)

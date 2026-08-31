@@ -10,6 +10,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.persistence.EntityManager;
 import org.hibernate.Hibernate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -105,10 +108,17 @@ public class ReportService {
                 if (file.isEmpty()) continue;
                 String s3Key = s3FileService.uploadDocument("report", file);
                 String fileUrl = s3FileService.getPublicUrl(s3Key);
+                byte[] fileBytes;
+                try {
+                    fileBytes = file.getBytes();
+                } catch (java.io.IOException e) {
+                    throw new RuntimeException("Failed to read receipt file: " + e.getMessage(), e);
+                }
                 receipts.add(ReportReceipt.builder()
                         .s3Key(s3Key)
                         .fileUrl(fileUrl)
                         .fileName(file.getOriginalFilename())
+                        .fileData(fileBytes)
                         .report(savedReport)
                         .build());
             }
@@ -194,5 +204,53 @@ public class ReportService {
         analytics.put("pendingReports", reports.stream().filter(r -> "Pending".equalsIgnoreCase(r.getStatus())).count());
 
         return analytics;
+    }
+
+    /**
+     * Stream a report receipt file. Prefers bytes persisted in the database,
+     * falling back to S3/local storage for legacy receipts without DB bytes.
+     */
+    public ResponseEntity<?> streamReceipt(ReportReceipt receipt) {
+        byte[] data = receipt.getFileData();
+        String contentType = null;
+
+        if (data == null || data.length == 0) {
+            S3FileService.StoredFile stored = s3FileService.loadFile(receipt.getS3Key());
+            if (stored == null || stored.data() == null || stored.data().length == 0) {
+                return ResponseEntity.status(404)
+                        .body(Map.of("success", false, "message", "Receipt file not found"));
+            }
+            data = stored.data();
+            contentType = stored.contentType();
+        }
+
+        String fileName = receipt.getFileName() != null ? receipt.getFileName() : "receipt";
+        String encodedFileName = fileName
+                .replace("\"", "")
+                .replace("\\", "");
+
+        MediaType mediaType;
+        if (contentType != null) {
+            try {
+                mediaType = MediaType.parseMediaType(contentType);
+            } catch (Exception e) {
+                mediaType = MediaType.APPLICATION_OCTET_STREAM;
+            }
+        } else {
+            String ext = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase() : "";
+            mediaType = switch (ext) {
+                case "pdf" -> MediaType.APPLICATION_PDF;
+                case "png" -> MediaType.IMAGE_PNG;
+                case "jpg", "jpeg" -> MediaType.IMAGE_JPEG;
+                case "gif" -> MediaType.IMAGE_GIF;
+                case "webp" -> MediaType.parseMediaType("image/webp");
+                default -> MediaType.APPLICATION_OCTET_STREAM;
+            };
+        }
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"")
+                .body(data);
     }
 }

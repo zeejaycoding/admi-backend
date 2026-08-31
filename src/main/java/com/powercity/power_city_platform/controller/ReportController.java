@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powercity.power_city_platform.dto.response.common.ApiResponse;
 import com.powercity.power_city_platform.entity.Report;
+import com.powercity.power_city_platform.entity.ReportReceipt;
 import com.powercity.power_city_platform.entity.User;
 import com.powercity.power_city_platform.service.ReportService;
 import com.powercity.power_city_platform.service.UserService;
@@ -107,6 +108,24 @@ public class ReportController {
         User currentUser = userService.getCurrentUser();
         reportService.deleteReport(id, currentUser);
         return ResponseEntity.ok(ApiResponse.success("Report deleted successfully", null));
+    }
+
+    @GetMapping("/{id}/receipts/{receiptId}/download")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
+    @Operation(summary = "Download report receipt", description = "Stream a remittance receipt file for a report")
+    public ResponseEntity<?> downloadReceipt(@PathVariable Long id, @PathVariable Long receiptId) {
+        try {
+            User currentUser = userService.getCurrentUser();
+            Report report = reportService.getReportById(id, currentUser);
+            ReportReceipt receipt = report.getReceipts().stream()
+                    .filter(r -> r.getId().equals(receiptId))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Receipt not found"));
+
+            return reportService.streamReceipt(receipt);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Failed to download receipt: " + e.getMessage()));
+        }
     }
 
     @GetMapping("/analytics")

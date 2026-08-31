@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
@@ -449,6 +450,47 @@ public class S3FileService {
         }
         return String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, key);
     }
+
+    /**
+     * Load file contents from S3 or local storage.
+     *
+     * @return the file bytes and content type, or null if the file does not exist
+     */
+    public StoredFile loadFile(String key) {
+        try {
+            if (key == null || key.isEmpty()) {
+                return null;
+            }
+            if (s3Available && s3Client != null) {
+                GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(key)
+                        .build();
+                try (ResponseInputStream<GetObjectResponse> inputStream = s3Client.getObject(getObjectRequest)) {
+                    byte[] data = inputStream.readAllBytes();
+                    String contentType = inputStream.response().contentType();
+                    return new StoredFile(
+                            data,
+                            contentType != null ? contentType : getContentTypeFromKey(key));
+                }
+            }
+            Path filePath = getLocalPath(key);
+            if (!Files.exists(filePath)) {
+                return null;
+            }
+            byte[] data = Files.readAllBytes(filePath);
+            String contentType = getContentTypeFromKey(key);
+            return new StoredFile(data, contentType);
+        } catch (Exception e) {
+            log.warn("Failed to load file '{}': {}", key, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Simple container for bytes served by loadFile.
+     */
+    public record StoredFile(byte[] data, String contentType) {}
 
     /**
      * Delete file from S3 using URL (extracts key from URL)
