@@ -32,14 +32,23 @@ public class EventService {
 
     private boolean isAdminOrSuperAdmin(User user) {
         return user.getUserRoles().stream()
-                .anyMatch(ur -> ur.getIsActive() && (
+                .anyMatch(ur -> Boolean.TRUE.equals(ur.getIsActive()) && (
                         ur.getRole().getName().equals("ADMIN") ||
                         ur.getRole().getName().equals("SUPER_ADMIN")));
     }
 
     private void checkEventOwnership(Event event, User currentUser) {
-        if (isAdminOrSuperAdmin(currentUser)) return;
-        if (!event.getCreatedBy().equals(currentUser.getId())) {
+        // The User passed from the controller is detached from the persistence
+        // context (it was loaded in its own read-only transaction), so its lazy
+        // userRoles/role collections cannot be read here without throwing a
+        // LazyInitializationException. Re-fetch it inside this transaction so
+        // the roles are initialized and ownership checks work reliably.
+        User user = currentUser.getId() != null
+                ? userRepository.findById(currentUser.getId()).orElse(currentUser)
+                : currentUser;
+
+        if (isAdminOrSuperAdmin(user)) return;
+        if (!event.getCreatedBy().equals(user.getId())) {
             throw new RuntimeException("You can only modify events you created");
         }
     }
