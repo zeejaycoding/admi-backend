@@ -130,7 +130,7 @@ public class User extends BaseEntity implements UserDetails {
     }
 
     public void incrementFailedLoginAttempts() {
-        this.failedLoginAttempts++;
+        this.failedLoginAttempts = (this.failedLoginAttempts == null ? 0 : this.failedLoginAttempts) + 1;
     }
 
     public void resetFailedLoginAttempts() {

@@ -79,7 +79,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<Page<UserListResponse>>> getAllUsers(
             @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") @Min(1) @Max(500) int size,
             @Parameter(description = "Sort by field") @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "Sort direction") @RequestParam(defaultValue = "desc") String sortDirection) {
         UserSearchRequest searchRequest = new UserSearchRequest(
@@ -103,7 +103,7 @@ public class UserController {
             @Parameter(description = "Account locked filter") @RequestParam(required = false) Boolean accountLocked,
             @Parameter(description = "Role filter") @RequestParam(required = false) String role,
             @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") @Min(1) @Max(500) int size,
             @Parameter(description = "Sort by field") @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "Sort direction") @RequestParam(defaultValue = "desc") String sortDirection) {
         String fullName = (firstName != null || lastName != null)
