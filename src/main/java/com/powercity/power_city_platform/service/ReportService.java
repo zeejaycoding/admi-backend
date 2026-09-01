@@ -173,6 +173,38 @@ public class ReportService {
         return reportRepository.save(report);
     }
 
+    /**
+     * Update a report's name (country) and its info section fields.
+     * Only the creator or an admin/super admin may edit a report.
+     */
+    public Report updateReport(Long id, LocalDate date, String country, String nationalLeader,
+                               String campus, String coordinator, String zonalLeader,
+                               String summary, User currentUser) {
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
+
+        if (!isAdminOrSuperAdmin(currentUser)) {
+            if (!report.getCreatedBy().equals(currentUser.getId())) {
+                throw new RuntimeException("Unauthorized to edit this report");
+            }
+        }
+
+        if (date != null) report.setDate(date);
+        if (country != null) report.setCountry(country);
+        if (nationalLeader != null) report.setNationalLeader(nationalLeader);
+        if (campus != null) report.setCampus(campus);
+        if (coordinator != null) report.setCoordinator(coordinator);
+        if (zonalLeader != null) report.setZonalLeader(zonalLeader);
+        if (summary != null) report.setSummary(summary);
+
+        report.setUpdatedBy(currentUser.getId());
+        Report updated = reportRepository.save(report);
+
+        Hibernate.initialize(updated.getExpenses());
+        Hibernate.initialize(updated.getReceipts());
+        return updated;
+    }
+
     public void deleteReport(Long id, User currentUser) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report not found"));

@@ -101,6 +101,32 @@ public class ReportController {
         return ResponseEntity.ok(ApiResponse.success("Report status updated to " + status, updatedReport));
     }
 
+    @PutMapping("/{id}")
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
+    @Operation(summary = "Update report", description = "Edit a report's name and info section")
+    public ResponseEntity<ApiResponse<Report>> updateReport(
+            @PathVariable Long id,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String country,
+            @RequestParam(value = "nationalLeader", required = false) String nationalLeader,
+            @RequestParam(required = false) String campus,
+            @RequestParam(required = false) String coordinator,
+            @RequestParam(value = "zonalLeader", required = false) String zonalLeader,
+            @RequestParam(required = false) String summary) {
+        User currentUser = userService.getCurrentUser();
+
+        LocalDate parsedDate = null;
+        if (date != null && !date.trim().isEmpty()) {
+            parsedDate = LocalDate.parse(date);
+        }
+
+        Report updatedReport = reportService.updateReport(
+                id, parsedDate, country, nationalLeader, campus, coordinator, zonalLeader, summary, currentUser
+        );
+        return ResponseEntity.ok(ApiResponse.success("Report updated successfully", updatedReport));
+    }
+
     @DeleteMapping("/{id}")
     @Transactional
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
