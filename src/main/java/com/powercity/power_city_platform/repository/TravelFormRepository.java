@@ -3,6 +3,7 @@ package com.powercity.power_city_platform.repository;
 import com.powercity.power_city_platform.entity.TravelForm;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,6 +14,21 @@ public interface TravelFormRepository extends JpaRepository<TravelForm, Long> {
     List<TravelForm> findByUserIdOrderBySubmittedAtDesc(Long userId);
 
     List<TravelForm> findAllByOrderBySubmittedAtDesc();
+
+    @Query("SELECT t FROM TravelForm t WHERE LOWER(t.campus) = LOWER(:campus) ORDER BY t.submittedAt DESC")
+    List<TravelForm> findByCampusIgnoreCaseOrderBySubmittedAtDesc(String campus);
+
+    @Query("SELECT COUNT(t) FROM TravelForm t WHERE LOWER(t.campus) = LOWER(:campus)")
+    long countByCampus(@Param("campus") String campus);
+
+    @Query("SELECT COUNT(t) FROM TravelForm t WHERE LOWER(t.campus) = LOWER(:campus) AND t.status = :status")
+    long countByCampusAndStatus(@Param("campus") String campus, @Param("status") String status);
+
+    @Query("SELECT t FROM TravelForm t WHERE LOWER(t.campus) = LOWER(:campus) AND t.status = 'Pending' ORDER BY t.submittedAt DESC")
+    List<TravelForm> findPendingApprovalsByCampus(@Param("campus") String campus);
+
+    @Query("SELECT t FROM TravelForm t WHERE LOWER(t.campus) = LOWER(:campus) ORDER BY t.submittedAt DESC")
+    List<TravelForm> findRecentByCampus(@Param("campus") String campus);
 
     long countByStatus(String status);
 

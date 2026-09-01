@@ -24,6 +24,18 @@ public interface MarriageCertificateRepository extends JpaRepository<MarriageCer
 
     long countByStatus(String status);
 
+    @Query("SELECT COUNT(m) FROM MarriageCertificate m WHERE LOWER(m.campus) = LOWER(:campus)")
+    long countByCampus(@Param("campus") String campus);
+
+    @Query("SELECT COUNT(m) FROM MarriageCertificate m WHERE LOWER(m.campus) = LOWER(:campus) AND m.status = :status")
+    long countByCampusAndStatus(@Param("campus") String campus, @Param("status") String status);
+
+    @Query("SELECT m FROM MarriageCertificate m WHERE LOWER(m.campus) = LOWER(:campus) ORDER BY m.submittedAt DESC")
+    List<MarriageCertificate> findRecentByCampus(@Param("campus") String campus);
+
+    @Query("SELECT m FROM MarriageCertificate m WHERE LOWER(m.campus) = LOWER(:campus) AND m.status = 'Pending' ORDER BY m.submittedAt DESC")
+    List<MarriageCertificate> findPendingApprovalsByCampus(@Param("campus") String campus);
+
     @Query("SELECT m FROM MarriageCertificate m ORDER BY m.submittedAt DESC")
     List<MarriageCertificate> findRecent();
 

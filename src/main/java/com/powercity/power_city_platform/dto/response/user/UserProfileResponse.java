@@ -21,5 +21,6 @@ public record UserProfileResponse(
         Set<String> permissions,
         LocalDateTime lastLogin,
         LocalDateTime createdAt,
-        UserStatsResponse stats
+        UserStatsResponse stats,
+        String campusName
 ) {}

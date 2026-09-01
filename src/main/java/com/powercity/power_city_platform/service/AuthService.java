@@ -12,6 +12,7 @@ import com.powercity.power_city_platform.exception.ResourceNotFoundException;
 import com.powercity.power_city_platform.repository.RoleRepository;
 import com.powercity.power_city_platform.repository.UserRepository;
 import com.powercity.power_city_platform.repository.UserRoleRepository;
+import com.powercity.power_city_platform.repository.CampusRepository;
 import com.powercity.power_city_platform.service.email.WelcomeEmailService;
 import com.powercity.power_city_platform.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
+    private final CampusRepository campusRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
@@ -282,8 +284,23 @@ public class AuthService {
                 user.getIsEmailVerified(),
                 roles,
                 permissions,
-                user.getLastLogin()
+                user.getLastLogin(),
+                resolveCampusName(user.getEmail())
         );
+    }
+
+    private String resolveCampusName(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        try {
+            return campusRepository.findActiveByCoordinatorEmail(email)
+                    .map(campus -> campus.getName())
+                    .orElse(null);
+        } catch (Exception e) {
+            logger.warn("Failed to resolve campus for email {}: {}", email, e.getMessage());
+            return null;
+        }
     }
 
     private String getCurrencyByRegion(String region) {

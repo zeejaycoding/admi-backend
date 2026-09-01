@@ -106,10 +106,10 @@ public class FormSubmissionController {
 
 
     /**
-     * Get all submissions for a form (SUPER_ADMIN only)
+     * Get all submissions for a form (ADMIN/COORDINATOR/SUPER_ADMIN)
      */
     @GetMapping("/admin/form/{formId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
     public ResponseEntity<Page<FormSubmissionResponse>> getFormSubmissions(
             @PathVariable Long formId,
             @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -121,10 +121,10 @@ public class FormSubmissionController {
     }
 
     /**
-     * Get all submissions across all forms (SUPER_ADMIN only)
+     * Get all submissions across all forms (ADMIN/COORDINATOR/SUPER_ADMIN)
      */
     @GetMapping("/admin/all")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
     public ResponseEntity<Page<FormSubmissionResponse>> getAllSubmissions(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(5000) int size

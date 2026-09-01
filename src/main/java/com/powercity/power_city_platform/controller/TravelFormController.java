@@ -55,7 +55,7 @@ public class TravelFormController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Update travel form status", description = "Approve or reject a travel form submission")
     public ResponseEntity<ApiResponse<TravelFormResponse>> updateTravelFormStatus(
             @PathVariable Long id,
@@ -81,7 +81,7 @@ public class TravelFormController {
     }
 
     @GetMapping("/stats")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER') or hasRole('COORDINATOR')")
     @Operation(summary = "Get power portal dashboard stats", description = "Retrieve aggregated statistics for the power portal dashboard")
     public ResponseEntity<ApiResponse<PowerPortalDashboardResponse>> getDashboardStats() {
         PowerPortalDashboardResponse stats = travelFormService.getDashboardStats();

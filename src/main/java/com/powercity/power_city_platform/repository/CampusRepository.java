@@ -26,6 +26,10 @@ public interface CampusRepository extends JpaRepository<Campus, Long> {
 
        Optional<Campus> findByNameAndRegion(String name, String region);
 
+       // Find the active campus managed by a given coordinator email (case-insensitive)
+       @Query("SELECT c FROM Campus c WHERE LOWER(c.coordinatorEmail) = LOWER(:coordinatorEmail) AND c.isActive = true")
+       Optional<Campus> findActiveByCoordinatorEmail(@Param("coordinatorEmail") String coordinatorEmail);
+
        // Region-based queries
        @Query("SELECT c FROM Campus c WHERE c.region = :region AND c.isActive = true ORDER BY c.name ASC")
        List<Campus> findActiveCampusesByRegion(@Param("region") String region);
@@ -85,9 +89,8 @@ public interface CampusRepository extends JpaRepository<Campus, Long> {
        @Query("UPDATE Campus c SET c.isFeatured = :isFeatured WHERE c.id = :campusId")
        void updateFeaturedStatus(@Param("campusId") Long campusId, @Param("isFeatured") Boolean isFeatured);
 
-       // Validation queries
-       @Query("SELECT COUNT(c) > 0 FROM Campus c WHERE c.name = :name AND c.region = :region AND c.id != :excludeId")
-       boolean existsByNameAndRegionExcludingId(@Param("name") String name, @Param("region") String region,
+              // Validation queries
+       @Query("SELECT COUNT(c) > 0 FROM Campus c WHERE c.name = :name AND c.region = :region AND c.id != :excludeId")       boolean existsByNameAndRegionExcludingId(@Param("name") String name, @Param("region") String region,
                      @Param("excludeId") Long excludeId);
 
        @Query("SELECT COUNT(c) > 0 FROM Campus c WHERE c.name = :name AND c.region = :region")

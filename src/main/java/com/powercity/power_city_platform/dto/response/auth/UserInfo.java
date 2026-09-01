@@ -16,5 +16,6 @@ public record UserInfo(
         Boolean isEmailVerified,
         Set<String> roles,
         Set<String> permissions,
-        LocalDateTime lastLogin
+        LocalDateTime lastLogin,
+        String campusName
 ) {}

@@ -25,6 +25,18 @@ public interface ChildDedicationRepository extends JpaRepository<ChildDedication
 
     long countByUserIdAndStatus(Long userId, String status);
 
+    @Query("SELECT COUNT(c) FROM ChildDedication c WHERE LOWER(c.campus) = LOWER(:campus)")
+    long countByCampus(@Param("campus") String campus);
+
+    @Query("SELECT COUNT(c) FROM ChildDedication c WHERE LOWER(c.campus) = LOWER(:campus) AND c.status = :status")
+    long countByCampusAndStatus(@Param("campus") String campus, @Param("status") String status);
+
+    @Query("SELECT c FROM ChildDedication c WHERE LOWER(c.campus) = LOWER(:campus) AND c.status = 'Pending' ORDER BY c.submittedAt DESC")
+    List<ChildDedication> findPendingApprovalsByCampus(@Param("campus") String campus);
+
+    @Query("SELECT c FROM ChildDedication c WHERE LOWER(c.campus) = LOWER(:campus) ORDER BY c.submittedAt DESC")
+    List<ChildDedication> findRecentByCampus(@Param("campus") String campus);
+
     @Query("SELECT COUNT(c) FROM ChildDedication c")
     long countTotal();
 

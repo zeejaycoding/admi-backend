@@ -674,7 +674,14 @@ public class FormSubmissionService {
 
             for (Map.Entry<String, List<MultipartFile>> entry : files.entrySet()) {
                 String fieldId = entry.getKey();
-                List<MultipartFile> fieldFiles = entry.getValue();
+                // Spring binds non-file request params (e.g. submissionData) into this
+                // map as String values, so a raw cast to List<MultipartFile> fails.
+                // Skip any entry whose value is not actually a list of files.
+                Object rawValue = entry.getValue();
+                if (!(rawValue instanceof List) || rawValue instanceof String) {
+                    continue;
+                }
+                List<MultipartFile> fieldFiles = (List<MultipartFile>) rawValue;
                 if (fieldFiles == null) {
                     continue;
                 }

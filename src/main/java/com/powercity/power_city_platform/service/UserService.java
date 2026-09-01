@@ -9,6 +9,7 @@ import com.powercity.power_city_platform.exception.ResourceNotFoundException;
 import com.powercity.power_city_platform.repository.RoleRepository;
 import com.powercity.power_city_platform.repository.UserRepository;
 import com.powercity.power_city_platform.repository.UserRoleRepository;
+import com.powercity.power_city_platform.repository.CampusRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
+    private final CampusRepository campusRepository;
     private final PasswordEncoder passwordEncoder;
     private final S3FileService s3FileService;
     private final PermissionService permissionService;
@@ -401,7 +403,22 @@ public class UserService {
                 permissions,
                 user.getLastLogin(),
                 user.getCreatedAt(),
-                stats);
+                stats,
+                resolveCampusName(user.getEmail()));
+    }
+
+    private String resolveCampusName(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        try {
+            return campusRepository.findActiveByCoordinatorEmail(email)
+                    .map(campus -> campus.getName())
+                    .orElse(null);
+        } catch (Exception e) {
+            logger.warn("Failed to resolve campus for email {}: {}", email, e.getMessage());
+            return null;
+        }
     }
 
     private UserListResponse createUserListResponse(User user) {

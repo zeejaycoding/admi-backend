@@ -11,6 +11,7 @@ import com.powercity.power_city_platform.entity.ChildDedication;
 import com.powercity.power_city_platform.repository.ChildDedicationRepository;
 import com.powercity.power_city_platform.repository.MarriageCertificateRepository;
 import com.powercity.power_city_platform.repository.TravelFormRepository;
+import com.powercity.power_city_platform.repository.CampusRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ public class TravelFormService {
     private final ChildDedicationRepository childDedicationRepository;
     private final MarriageCertificateRepository marriageCertificateRepository;
     private final UserService userService;
+    private final CampusRepository campusRepository;
 
     public TravelFormResponse createTravelForm(TravelFormCreateRequest request) {
         User currentUser = userService.getCurrentUser();
@@ -55,7 +57,7 @@ public class TravelFormService {
         User currentUser = userService.getCurrentUser();
         List<TravelForm> forms;
 
-        if (isAdminOrReviewer(currentUser)) {
+        if (isAdmin(currentUser)) {
             forms = travelFormRepository.findAllByOrderBySubmittedAtDesc();
         } else {
             forms = travelFormRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
@@ -72,7 +74,7 @@ public class TravelFormService {
         TravelForm form = travelFormRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Travel form not found with id: " + id));
 
-        if (!isAdminOrReviewer(currentUser) && !form.getUser().getId().equals(currentUser.getId())) {
+        if (!isAdmin(currentUser) && !form.getUser().getId().equals(currentUser.getId())) {
             throw new RuntimeException("Access denied");
         }
 
@@ -83,6 +85,10 @@ public class TravelFormService {
         User currentUser = userService.getCurrentUser();
         TravelForm form = travelFormRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Travel form not found with id: " + id));
+
+        if (!"Pending".equalsIgnoreCase(form.getStatus())) {
+            throw new IllegalStateException("A submitted form can only be reviewed once. Current status: " + form.getStatus());
+        }
 
         String normalizedStatus = status.toUpperCase();
         if (!"APPROVED".equals(normalizedStatus) && !"REJECTED".equals(normalizedStatus)) {
@@ -106,7 +112,7 @@ public class TravelFormService {
         TravelForm form = travelFormRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Travel form not found with id: " + id));
 
-        if (!isAdminOrReviewer(currentUser) && !form.getUser().getId().equals(currentUser.getId())) {
+        if (!isAdmin(currentUser)) {
             throw new RuntimeException("Access denied");
         }
 
@@ -115,12 +121,29 @@ public class TravelFormService {
 
     @Transactional(readOnly = true)
     public PowerPortalDashboardResponse getDashboardStats() {
-        long totalTravel = travelFormRepository.countTotal();
-        long pendingTravelCount = travelFormRepository.countByStatus("Pending");
-        long approvedTravelCount = travelFormRepository.countByStatus("Approved");
+        User currentUser = userService.getCurrentUser();
+        String campusScope = resolveCampus(currentUser);
+        boolean scoped = isCoordinatorOrNationalLeader(currentUser) && campusScope != null;
 
-        List<TravelForm> recentTravel = travelFormRepository.findRecent();
-        List<TravelForm> pendingTravelForms = travelFormRepository.findPendingApprovals();
+        long totalTravel;
+        long pendingTravelCount;
+        long approvedTravelCount;
+        List<TravelForm> recentTravel;
+        List<TravelForm> pendingTravelForms;
+
+        if (scoped) {
+            totalTravel = travelFormRepository.countByCampus(campusScope);
+            pendingTravelCount = travelFormRepository.countByCampusAndStatus(campusScope, "Pending");
+            approvedTravelCount = travelFormRepository.countByCampusAndStatus(campusScope, "Approved");
+            recentTravel = travelFormRepository.findRecentByCampus(campusScope);
+            pendingTravelForms = travelFormRepository.findPendingApprovalsByCampus(campusScope);
+        } else {
+            totalTravel = travelFormRepository.countTotal();
+            pendingTravelCount = travelFormRepository.countByStatus("Pending");
+            approvedTravelCount = travelFormRepository.countByStatus("Approved");
+            recentTravel = travelFormRepository.findRecent();
+            pendingTravelForms = travelFormRepository.findPendingApprovals();
+        }
 
         List<PowerPortalDashboardResponse.RecentActivity> activities = new ArrayList<>();
 
@@ -133,7 +156,13 @@ public class TravelFormService {
             ));
         }
 
-        for (ChildDedication cd : childDedicationRepository.findRecent().stream().limit(3).toList()) {
+        List<ChildDedication> recentChildren;
+        if (scoped) {
+            recentChildren = childDedicationRepository.findRecentByCampus(campusScope);
+        } else {
+            recentChildren = childDedicationRepository.findRecent();
+        }
+        for (ChildDedication cd : recentChildren.stream().limit(3).toList()) {
             activities.add(new PowerPortalDashboardResponse.RecentActivity(
                     "Child Dedication",
                     cd.getStatus().equals("Pending") ? "Submitted" : cd.getStatus().equals("Approved") ? "Approved" : "Rejected",
@@ -157,7 +186,13 @@ public class TravelFormService {
             ));
         }
 
-        for (ChildDedication cd : childDedicationRepository.findPendingApprovals().stream().limit(5).toList()) {
+        List<ChildDedication> pendingChildren;
+        if (scoped) {
+            pendingChildren = childDedicationRepository.findPendingApprovalsByCampus(campusScope);
+        } else {
+            pendingChildren = childDedicationRepository.findPendingApprovals();
+        }
+        for (ChildDedication cd : pendingChildren.stream().limit(5).toList()) {
             approvals.add(new PowerPortalDashboardResponse.PendingApproval(
                     cd.getCertificateNumber(),
                     cd.getUser().getFirstName() + " " + cd.getUser().getLastName(),
@@ -169,13 +204,33 @@ public class TravelFormService {
         List<PowerPortalDashboardResponse.PendingApproval> finalApprovals = approvals.size() > 10
                 ? new ArrayList<>(approvals.subList(0, 10)) : approvals;
 
-        int childTotal = (int) childDedicationRepository.countTotal();
-        int childPending = (int) childDedicationRepository.countByStatus("Pending");
-        int childApproved = (int) childDedicationRepository.countByStatus("Approved");
+        int childTotal;
+        int childPending;
+        int childApproved;
 
-        int marriageTotal = (int) marriageCertificateRepository.countTotal();
-        int marriagePending = (int) marriageCertificateRepository.countByStatus("Pending");
-        int marriageApproved = (int) marriageCertificateRepository.countByStatus("Approved");
+        if (scoped) {
+            childTotal = (int) childDedicationRepository.countByCampus(campusScope);
+            childPending = (int) childDedicationRepository.countByCampusAndStatus(campusScope, "Pending");
+            childApproved = (int) childDedicationRepository.countByCampusAndStatus(campusScope, "Approved");
+        } else {
+            childTotal = (int) childDedicationRepository.countTotal();
+            childPending = (int) childDedicationRepository.countByStatus("Pending");
+            childApproved = (int) childDedicationRepository.countByStatus("Approved");
+        }
+
+        int marriageTotal;
+        int marriagePending;
+        int marriageApproved;
+
+        if (scoped) {
+            marriageTotal = (int) marriageCertificateRepository.countByCampus(campusScope);
+            marriagePending = (int) marriageCertificateRepository.countByCampusAndStatus(campusScope, "Pending");
+            marriageApproved = (int) marriageCertificateRepository.countByCampusAndStatus(campusScope, "Approved");
+        } else {
+            marriageTotal = (int) marriageCertificateRepository.countTotal();
+            marriagePending = (int) marriageCertificateRepository.countByStatus("Pending");
+            marriageApproved = (int) marriageCertificateRepository.countByStatus("Approved");
+        }
 
         return new PowerPortalDashboardResponse(
                 new PowerPortalDashboardResponse.FormTypeStats((int) totalTravel, (int) pendingTravelCount, (int) approvedTravelCount),
@@ -224,12 +279,34 @@ public class TravelFormService {
         );
     }
 
-    private boolean isAdminOrReviewer(User user) {
+    private boolean isAdmin(User user) {
         return user.getUserRoles().stream()
                 .filter(UserRole::getIsActive)
                 .anyMatch(ur -> {
                     String role = ur.getRole().getName();
-                    return role.equals("SUPER_ADMIN") || role.equals("ADMIN") || role.equals("NATIONAL_LEADER");
+                    return role.equals("SUPER_ADMIN") || role.equals("ADMIN");
                 });
+    }
+
+    private boolean isCoordinatorOrNationalLeader(User user) {
+        return user.getUserRoles().stream()
+                .filter(UserRole::getIsActive)
+                .anyMatch(ur -> {
+                    String role = ur.getRole().getName();
+                    return role.equals("COORDINATOR") || role.equals("NATIONAL_LEADER");
+                });
+    }
+
+    private String resolveCampus(User user) {
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            return null;
+        }
+        try {
+            return campusRepository.findActiveByCoordinatorEmail(user.getEmail())
+                    .map(campus -> campus.getName())
+                    .orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
