@@ -132,9 +132,9 @@ public class TravelFormService {
         List<TravelForm> pendingTravelForms;
 
         if (scoped) {
-            totalTravel = travelFormRepository.countByCampus(campusScope);
-            pendingTravelCount = travelFormRepository.countByCampusAndStatus(campusScope, "Pending");
-            approvedTravelCount = travelFormRepository.countByCampusAndStatus(campusScope, "Approved");
+            totalTravel = travelFormRepository.countByUserOrCampus(currentUser.getId(), campusScope);
+            pendingTravelCount = travelFormRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Pending");
+            approvedTravelCount = travelFormRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Approved");
             recentTravel = travelFormRepository.findRecentByCampus(campusScope);
             pendingTravelForms = travelFormRepository.findPendingApprovalsByCampus(campusScope);
         } else {
@@ -209,9 +209,9 @@ public class TravelFormService {
         int childApproved;
 
         if (scoped) {
-            childTotal = (int) childDedicationRepository.countByCampus(campusScope);
-            childPending = (int) childDedicationRepository.countByCampusAndStatus(campusScope, "Pending");
-            childApproved = (int) childDedicationRepository.countByCampusAndStatus(campusScope, "Approved");
+            childTotal = (int) childDedicationRepository.countByUserOrCampus(currentUser.getId(), campusScope);
+            childPending = (int) childDedicationRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Pending");
+            childApproved = (int) childDedicationRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Approved");
         } else {
             childTotal = (int) childDedicationRepository.countTotal();
             childPending = (int) childDedicationRepository.countByStatus("Pending");
@@ -223,9 +223,9 @@ public class TravelFormService {
         int marriageApproved;
 
         if (scoped) {
-            marriageTotal = (int) marriageCertificateRepository.countByCampus(campusScope);
-            marriagePending = (int) marriageCertificateRepository.countByCampusAndStatus(campusScope, "Pending");
-            marriageApproved = (int) marriageCertificateRepository.countByCampusAndStatus(campusScope, "Approved");
+            marriageTotal = (int) marriageCertificateRepository.countByUserOrCampus(currentUser.getId(), campusScope);
+            marriagePending = (int) marriageCertificateRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Pending");
+            marriageApproved = (int) marriageCertificateRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Approved");
         } else {
             marriageTotal = (int) marriageCertificateRepository.countTotal();
             marriagePending = (int) marriageCertificateRepository.countByStatus("Pending");

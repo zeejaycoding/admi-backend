@@ -59,7 +59,8 @@ public class ChildDedicationService {
         if (isSuperAdminOrAdmin(currentUser)) {
             dedications = childDedicationRepository.findAllByOrderBySubmittedAtDesc();
         } else if (isNationalLeaderOrCoordinator(currentUser)) {
-            dedications = childDedicationRepository.findByCampusRegionOrderBySubmittedAtDesc(currentUser.getRegion());
+            dedications = childDedicationRepository.findByUserOrCampusRegionOrderBySubmittedAtDesc(
+                    currentUser.getId(), currentUser.getRegion());
         } else {
             dedications = childDedicationRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
         }
@@ -221,7 +222,11 @@ public class ChildDedicationService {
     private boolean canAccess(User user, ChildDedication dedication) {
         if (isSuperAdminOrAdmin(user)) return true;
         if (isNationalLeaderOrCoordinator(user)) {
-            return dedication.getCampus() != null && dedication.getCampus().equalsIgnoreCase(user.getRegion());
+            boolean isCreator = dedication.getUser() != null
+                    && dedication.getUser().getId().equals(user.getId());
+            boolean sameRegion = dedication.getCampus() != null
+                    && dedication.getCampus().equalsIgnoreCase(user.getRegion());
+            return isCreator || sameRegion;
         }
         return dedication.getUser().getId().equals(user.getId());
     }

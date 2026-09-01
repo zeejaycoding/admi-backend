@@ -127,7 +127,7 @@ public class CampusController {
     @Operation(summary = "Get all campuses", description = "Get all campuses with pagination")
     public ResponseEntity<ApiResponse<CampusListResponse>> getAllCampuses(
             @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") @Min(1) @Max(500) int size,
             @Parameter(description = "Sort by field") @RequestParam(defaultValue = "name") String sortBy,
             @Parameter(description = "Sort direction") @RequestParam(defaultValue = "asc") String sortDirection) {
 

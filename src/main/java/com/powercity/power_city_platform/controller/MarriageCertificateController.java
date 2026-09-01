@@ -23,7 +23,6 @@ public class MarriageCertificateController {
     private final MarriageCertificateService marriageCertificateService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Create a marriage certificate", description = "Save the marriage certificate and email it to both partners")
     public ResponseEntity<ApiResponse<MarriageCertificateResponse>> createCertificate(
             @Valid @RequestBody MarriageCertificateCreateRequest request) {

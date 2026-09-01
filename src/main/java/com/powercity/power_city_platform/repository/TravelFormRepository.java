@@ -24,6 +24,14 @@ public interface TravelFormRepository extends JpaRepository<TravelForm, Long> {
     @Query("SELECT COUNT(t) FROM TravelForm t WHERE LOWER(t.campus) = LOWER(:campus) AND t.status = :status")
     long countByCampusAndStatus(@Param("campus") String campus, @Param("status") String status);
 
+    @Query("SELECT COUNT(t) FROM TravelForm t WHERE t.user.id = :userId " +
+           "OR (:campus IS NOT NULL AND LOWER(t.campus) = LOWER(:campus))")
+    long countByUserOrCampus(@Param("userId") Long userId, @Param("campus") String campus);
+
+    @Query("SELECT COUNT(t) FROM TravelForm t WHERE t.status = :status AND (t.user.id = :userId " +
+           "OR (:campus IS NOT NULL AND LOWER(t.campus) = LOWER(:campus)))")
+    long countByUserOrCampusAndStatus(@Param("userId") Long userId, @Param("campus") String campus, @Param("status") String status);
+
     @Query("SELECT t FROM TravelForm t WHERE LOWER(t.campus) = LOWER(:campus) AND t.status = 'Pending' ORDER BY t.submittedAt DESC")
     List<TravelForm> findPendingApprovalsByCampus(@Param("campus") String campus);
 

@@ -21,6 +21,12 @@ public interface ChildDedicationRepository extends JpaRepository<ChildDedication
            "ORDER BY c.submittedAt DESC")
     List<ChildDedication> findByCampusRegionOrderBySubmittedAtDesc(@Param("region") String region);
 
+    @Query("SELECT c FROM ChildDedication c WHERE c.user.id = :userId " +
+           "OR c.campus IN (SELECT cp.name FROM Campus cp WHERE cp.region = :region) " +
+           "ORDER BY c.submittedAt DESC")
+    List<ChildDedication> findByUserOrCampusRegionOrderBySubmittedAtDesc(
+            @Param("userId") Long userId, @Param("region") String region);
+
     long countByStatus(String status);
 
     long countByUserIdAndStatus(Long userId, String status);
@@ -30,6 +36,14 @@ public interface ChildDedicationRepository extends JpaRepository<ChildDedication
 
     @Query("SELECT COUNT(c) FROM ChildDedication c WHERE LOWER(c.campus) = LOWER(:campus) AND c.status = :status")
     long countByCampusAndStatus(@Param("campus") String campus, @Param("status") String status);
+
+    @Query("SELECT COUNT(c) FROM ChildDedication c WHERE c.user.id = :userId " +
+           "OR (:campus IS NOT NULL AND LOWER(c.campus) = LOWER(:campus))")
+    long countByUserOrCampus(@Param("userId") Long userId, @Param("campus") String campus);
+
+    @Query("SELECT COUNT(c) FROM ChildDedication c WHERE c.status = :status AND (c.user.id = :userId " +
+           "OR (:campus IS NOT NULL AND LOWER(c.campus) = LOWER(:campus)))")
+    long countByUserOrCampusAndStatus(@Param("userId") Long userId, @Param("campus") String campus, @Param("status") String status);
 
     @Query("SELECT c FROM ChildDedication c WHERE LOWER(c.campus) = LOWER(:campus) AND c.status = 'Pending' ORDER BY c.submittedAt DESC")
     List<ChildDedication> findPendingApprovalsByCampus(@Param("campus") String campus);
