@@ -23,10 +23,20 @@ public interface ChildDedicationRepository extends JpaRepository<ChildDedication
     List<ChildDedication> findByCampusRegionOrderBySubmittedAtDesc(@Param("region") String region);
 
     @Query("SELECT c FROM ChildDedication c WHERE c.user.id = :userId " +
-           "OR c.campus IN (SELECT cp.name FROM Campus cp WHERE cp.region = :region) " +
+           "OR c.user.id IN (SELECT u.id FROM User u JOIN u.userRoles ur JOIN ur.role rl " +
+           "    WHERE rl.name = 'COORDINATOR' AND ur.isActive = true " +
+           "    AND LOWER(u.email) IN (SELECT LOWER(cp.coordinatorEmail) FROM Campus cp " +
+           "        WHERE LOWER(cp.name) = LOWER(:campus))) " +
            "ORDER BY c.submittedAt DESC")
-    List<ChildDedication> findByUserOrCampusRegionOrderBySubmittedAtDesc(
-            @Param("userId") Long userId, @Param("region") String region);
+    List<ChildDedication> findByUserIdOrSameCampusCoordinators(
+            @Param("userId") Long userId, @Param("campus") String campus);
+
+    @Query("SELECT c FROM ChildDedication c " +
+           "WHERE c.user.region = :region " +
+           "AND c.user.id NOT IN (SELECT ur.user.id FROM UserRole ur " +
+           "    WHERE ur.isActive = true AND ur.role.name IN ('ADMIN','SUPER_ADMIN')) " +
+           "ORDER BY c.submittedAt DESC")
+    List<ChildDedication> findByRegionForNationalLeader(@Param("region") String region);
 
     long countByStatus(String status);
 
@@ -45,6 +55,21 @@ public interface ChildDedicationRepository extends JpaRepository<ChildDedication
     @Query("SELECT COUNT(c) FROM ChildDedication c WHERE c.status = :status AND (c.user.id = :userId " +
            "OR (:campus IS NOT NULL AND LOWER(c.campus) = LOWER(:campus)))")
     long countByUserOrCampusAndStatus(@Param("userId") Long userId, @Param("campus") String campus, @Param("status") String status);
+
+    // Coordinator dashboard counts (excludes NL/ADMIN/SUPER_ADMIN).
+    @Query("SELECT COUNT(c) FROM ChildDedication c WHERE c.user.id = :userId " +
+           "OR c.user.id IN (SELECT u.id FROM User u JOIN u.userRoles ur JOIN ur.role rl " +
+           "    WHERE rl.name = 'COORDINATOR' AND ur.isActive = true " +
+           "    AND LOWER(u.email) IN (SELECT LOWER(cp.coordinatorEmail) FROM Campus cp " +
+           "        WHERE LOWER(cp.name) = LOWER(:campus)))")
+    long countByUserIdOrSameCampusCoordinators(@Param("userId") Long userId, @Param("campus") String campus);
+
+    @Query("SELECT COUNT(c) FROM ChildDedication c WHERE c.status = :status AND (c.user.id = :userId " +
+           "OR c.user.id IN (SELECT u.id FROM User u JOIN u.userRoles ur JOIN ur.role rl " +
+           "    WHERE rl.name = 'COORDINATOR' AND ur.isActive = true " +
+           "    AND LOWER(u.email) IN (SELECT LOWER(cp.coordinatorEmail) FROM Campus cp " +
+           "        WHERE LOWER(cp.name) = LOWER(:campus))))")
+    long countByUserIdOrSameCampusCoordinatorsAndStatus(@Param("userId") Long userId, @Param("campus") String campus, @Param("status") String status);
 
     @Query("SELECT c FROM ChildDedication c WHERE LOWER(c.campus) = LOWER(:campus) AND c.status = 'Pending' ORDER BY c.submittedAt DESC")
     List<ChildDedication> findPendingApprovalsByCampus(@Param("campus") String campus);

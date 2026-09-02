@@ -24,6 +24,30 @@ public class ReportService {
     private final ReportRepository reportRepository;
     private final S3FileService s3FileService;
     private final EntityManager entityManager;
+    private final UserService userService;
+
+    private String resolveCampusName(User user) {
+        if (user == null || user.getEmail() == null || user.getEmail().isBlank()) {
+            return null;
+        }
+        return userService.resolveCampusName(user.getEmail());
+    }
+
+    private boolean isSameCampusReport(User user, Report report) {
+        if (isNationalLeader(user) || isAdminOrSuperAdmin(user)) {
+            return false;
+        }
+        boolean isCreator = report.getCreatedBy() != null
+                && report.getCreatedBy().equals(user.getId());
+        if (isCreator) {
+            return true;
+        }
+        String campus = resolveCampusName(user);
+        if (campus == null || report.getCampus() == null) {
+            return false;
+        }
+        return report.getCampus().equalsIgnoreCase(campus);
+    }
 
     private boolean isAdminOrSuperAdmin(User user) {
         return user.getUserRoles().stream()
@@ -35,6 +59,11 @@ public class ReportService {
     private boolean isCoordinator(User user) {
         return user.getUserRoles().stream()
                 .anyMatch(ur -> ur.getIsActive() && ur.getRole().getName().equals("COORDINATOR"));
+    }
+
+    private boolean isNationalLeader(User user) {
+        return user.getUserRoles().stream()
+                .anyMatch(ur -> ur.getIsActive() && ur.getRole().getName().equals("NATIONAL_LEADER"));
     }
 
     public Report createReport(
@@ -145,8 +174,12 @@ public class ReportService {
         List<Report> reports;
         if (isAdminOrSuperAdmin(currentUser)) {
             reports = reportRepository.findAll();
+        } else if (isNationalLeader(currentUser)) {
+            reports = reportRepository.findByRegionForNationalLeader(
+                    currentUser.getId(), currentUser.getRegion());
         } else if (isCoordinator(currentUser)) {
-            reports = reportRepository.findByCreatedBy(currentUser.getId());
+            reports = reportRepository.findByCreatedByOrSameCampusCoordinators(
+                    currentUser.getId(), resolveCampusName(currentUser));
         } else {
             return Collections.emptyList();
         }
@@ -163,7 +196,13 @@ public class ReportService {
                 .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
 
         if (!isAdminOrSuperAdmin(currentUser)) {
-            if (!report.getCreatedBy().equals(currentUser.getId())) {
+            boolean isCreator = report.getCreatedBy() != null
+                    && report.getCreatedBy().equals(currentUser.getId());
+            boolean sameRegion = currentUser.getRegion() != null
+                    && currentUser.getRegion().equalsIgnoreCase(report.getCountry());
+            if (!isCreator
+                    && !(isNationalLeader(currentUser) && sameRegion)
+                    && !(isCoordinator(currentUser) && isSameCampusReport(currentUser, report))) {
                 throw new RuntimeException("Unauthorized access to this report");
             }
         }
@@ -196,7 +235,13 @@ public class ReportService {
                 .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
 
         if (!isAdminOrSuperAdmin(currentUser)) {
-            if (!report.getCreatedBy().equals(currentUser.getId())) {
+            boolean isCreator = report.getCreatedBy() != null
+                    && report.getCreatedBy().equals(currentUser.getId());
+            boolean sameRegion = currentUser.getRegion() != null
+                    && currentUser.getRegion().equalsIgnoreCase(report.getCountry());
+            if (!isCreator
+                    && !(isNationalLeader(currentUser) && sameRegion)
+                    && !(isCoordinator(currentUser) && isSameCampusReport(currentUser, report))) {
                 throw new RuntimeException("Unauthorized to edit this report");
             }
         }
@@ -230,7 +275,13 @@ public class ReportService {
                 .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
 
         if (!isAdminOrSuperAdmin(currentUser)) {
-            if (!report.getCreatedBy().equals(currentUser.getId())) {
+            boolean isCreator = report.getCreatedBy() != null
+                    && report.getCreatedBy().equals(currentUser.getId());
+            boolean sameRegion = currentUser.getRegion() != null
+                    && currentUser.getRegion().equalsIgnoreCase(report.getCountry());
+            if (!isCreator
+                    && !(isNationalLeader(currentUser) && sameRegion)
+                    && !(isCoordinator(currentUser) && isSameCampusReport(currentUser, report))) {
                 throw new RuntimeException("Unauthorized access to delete this report");
             }
         }

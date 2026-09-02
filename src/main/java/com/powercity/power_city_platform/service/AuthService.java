@@ -294,7 +294,7 @@ public class AuthService {
             return null;
         }
         try {
-            return campusRepository.findActiveByCoordinatorEmail(email)
+            return campusRepository.findFirstByCoordinatorEmailIgnoreCaseAndIsActiveTrue(email)
                     .map(campus -> campus.getName())
                     .orElse(null);
         } catch (Exception e) {

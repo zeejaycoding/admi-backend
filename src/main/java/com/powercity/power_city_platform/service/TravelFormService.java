@@ -59,6 +59,11 @@ public class TravelFormService {
 
         if (isAdmin(currentUser)) {
             forms = travelFormRepository.findAllByOrderBySubmittedAtDesc();
+        } else if (isNationalLeader(currentUser)) {
+            forms = travelFormRepository.findByRegionForNationalLeader(currentUser.getRegion());
+        } else if (isCoordinatorOrNationalLeader(currentUser)) {
+            forms = travelFormRepository.findByUserIdOrSameCampusCoordinators(
+                    currentUser.getId(), resolveCampus(currentUser));
         } else {
             forms = travelFormRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
         }
@@ -74,7 +79,12 @@ public class TravelFormService {
         TravelForm form = travelFormRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Travel form not found with id: " + id));
 
-        if (!isAdmin(currentUser) && !form.getUser().getId().equals(currentUser.getId())) {
+        if (!isAdmin(currentUser)
+                && !form.getUser().getId().equals(currentUser.getId())
+                && !(isNationalLeader(currentUser)
+                        && currentUser.getRegion() != null
+                        && currentUser.getRegion().equalsIgnoreCase(form.getUser().getRegion()))
+                && !(isCoordinator(currentUser) && isSameCampusForm(currentUser, form))) {
             throw new RuntimeException("Access denied");
         }
 
@@ -112,7 +122,12 @@ public class TravelFormService {
         TravelForm form = travelFormRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Travel form not found with id: " + id));
 
-        if (!isAdmin(currentUser)) {
+        if (!isAdmin(currentUser)
+                && !(isNationalLeader(currentUser)
+                        && currentUser.getRegion() != null
+                        && form.getUser() != null
+                        && currentUser.getRegion().equalsIgnoreCase(form.getUser().getRegion()))
+                && !(isCoordinator(currentUser) && isSameCampusForm(currentUser, form))) {
             throw new RuntimeException("Access denied");
         }
 
@@ -123,7 +138,8 @@ public class TravelFormService {
     public PowerPortalDashboardResponse getDashboardStats() {
         User currentUser = userService.getCurrentUser();
         String campusScope = resolveCampus(currentUser);
-        boolean scoped = isCoordinatorOrNationalLeader(currentUser) && campusScope != null;
+        boolean isCoordinatorUser = isCoordinator(currentUser);
+        boolean scoped = (isCoordinatorUser || isNationalLeader(currentUser)) && campusScope != null;
 
         long totalTravel;
         long pendingTravelCount;
@@ -131,7 +147,18 @@ public class TravelFormService {
         List<TravelForm> recentTravel;
         List<TravelForm> pendingTravelForms;
 
-        if (scoped) {
+        if (scoped && isCoordinatorUser) {
+            List<TravelForm> scopedList = travelFormRepository.findByUserIdOrSameCampusCoordinators(
+                    currentUser.getId(), campusScope);
+            totalTravel = scopedList.size();
+            pendingTravelCount = scopedList.stream()
+                    .filter(f -> "Pending".equalsIgnoreCase(f.getStatus())).count();
+            approvedTravelCount = scopedList.stream()
+                    .filter(f -> "Approved".equalsIgnoreCase(f.getStatus())).count();
+            recentTravel = scopedList;
+            pendingTravelForms = scopedList.stream()
+                    .filter(f -> "Pending".equalsIgnoreCase(f.getStatus())).toList();
+        } else if (scoped) {
             totalTravel = travelFormRepository.countByUserOrCampus(currentUser.getId(), campusScope);
             pendingTravelCount = travelFormRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Pending");
             approvedTravelCount = travelFormRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Approved");
@@ -157,7 +184,10 @@ public class TravelFormService {
         }
 
         List<ChildDedication> recentChildren;
-        if (scoped) {
+        if (scoped && isCoordinatorUser) {
+            recentChildren = childDedicationRepository.findByUserIdOrSameCampusCoordinators(
+                    currentUser.getId(), campusScope);
+        } else if (scoped) {
             recentChildren = childDedicationRepository.findRecentByCampus(campusScope);
         } else {
             recentChildren = childDedicationRepository.findRecent();
@@ -187,7 +217,11 @@ public class TravelFormService {
         }
 
         List<ChildDedication> pendingChildren;
-        if (scoped) {
+        if (scoped && isCoordinatorUser) {
+            pendingChildren = childDedicationRepository.findByUserIdOrSameCampusCoordinators(
+                    currentUser.getId(), campusScope).stream()
+                    .filter(cd -> "Pending".equalsIgnoreCase(cd.getStatus())).toList();
+        } else if (scoped) {
             pendingChildren = childDedicationRepository.findPendingApprovalsByCampus(campusScope);
         } else {
             pendingChildren = childDedicationRepository.findPendingApprovals();
@@ -208,7 +242,11 @@ public class TravelFormService {
         int childPending;
         int childApproved;
 
-        if (scoped) {
+        if (scoped && isCoordinatorUser) {
+            childTotal = (int) childDedicationRepository.countByUserIdOrSameCampusCoordinators(currentUser.getId(), campusScope);
+            childPending = (int) childDedicationRepository.countByUserIdOrSameCampusCoordinatorsAndStatus(currentUser.getId(), campusScope, "Pending");
+            childApproved = (int) childDedicationRepository.countByUserIdOrSameCampusCoordinatorsAndStatus(currentUser.getId(), campusScope, "Approved");
+        } else if (scoped) {
             childTotal = (int) childDedicationRepository.countByUserOrCampus(currentUser.getId(), campusScope);
             childPending = (int) childDedicationRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Pending");
             childApproved = (int) childDedicationRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Approved");
@@ -222,7 +260,11 @@ public class TravelFormService {
         int marriagePending;
         int marriageApproved;
 
-        if (scoped) {
+        if (scoped && isCoordinatorUser) {
+            marriageTotal = (int) marriageCertificateRepository.countByUserIdOrSameCampusCoordinators(currentUser.getId(), campusScope);
+            marriagePending = (int) marriageCertificateRepository.countByUserIdOrSameCampusCoordinatorsAndStatus(currentUser.getId(), campusScope, "Pending");
+            marriageApproved = (int) marriageCertificateRepository.countByUserIdOrSameCampusCoordinatorsAndStatus(currentUser.getId(), campusScope, "Approved");
+        } else if (scoped) {
             marriageTotal = (int) marriageCertificateRepository.countByUserOrCampus(currentUser.getId(), campusScope);
             marriagePending = (int) marriageCertificateRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Pending");
             marriageApproved = (int) marriageCertificateRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Approved");
@@ -297,16 +339,54 @@ public class TravelFormService {
                 });
     }
 
+    private boolean isNationalLeader(User user) {
+        return user.getUserRoles().stream()
+                .filter(UserRole::getIsActive)
+                .anyMatch(ur -> {
+                    String role = ur.getRole().getName();
+                    return role.equals("NATIONAL_LEADER");
+                });
+    }
+
+    private boolean isCoordinator(User user) {
+        return user.getUserRoles().stream()
+                .filter(UserRole::getIsActive)
+                .anyMatch(ur -> {
+                    String role = ur.getRole().getName();
+                    return role.equals("COORDINATOR");
+                });
+    }
+
     private String resolveCampus(User user) {
         if (user.getEmail() == null || user.getEmail().isBlank()) {
             return null;
         }
         try {
-            return campusRepository.findActiveByCoordinatorEmail(user.getEmail())
+            return campusRepository.findFirstByCoordinatorEmailIgnoreCaseAndIsActiveTrue(user.getEmail())
                     .map(campus -> campus.getName())
                     .orElse(null);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private boolean isSameCampusForm(User user, TravelForm form) {
+        if (form.getUser() == null || isNationalLeader(user) || isAdmin(user)) {
+            return false;
+        }
+        if (form.getUser().getId().equals(user.getId())) {
+            return true;
+        }
+        boolean submitterIsCoordinator = form.getUser().getUserRoles().stream()
+                .filter(UserRole::getIsActive)
+                .anyMatch(ur -> ur.getRole().getName().equals("COORDINATOR"));
+        if (!submitterIsCoordinator) {
+            return false;
+        }
+        String campus = resolveCampus(user);
+        if (campus == null) {
+            return false;
+        }
+        return campus.equalsIgnoreCase(resolveCampus(form.getUser()));
     }
 }

@@ -181,7 +181,7 @@ public class CampusController {
 
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Create campus", description = "Create a new campus")
     public ResponseEntity<ApiResponse<CampusResponse>> createCampus(
             @Valid @RequestBody CreateCampusRequest request) {
@@ -191,7 +191,7 @@ public class CampusController {
     }
 
     @PutMapping("/{campusId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Update campus", description = "Update an existing campus")
     public ResponseEntity<ApiResponse<CampusResponse>> updateCampus(
             @Parameter(description = "Campus ID") @PathVariable Long campusId,
@@ -201,7 +201,7 @@ public class CampusController {
     }
 
     @DeleteMapping("/{campusId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Delete campus", description = "Delete a campus")
     public ResponseEntity<ApiResponse<String>> deleteCampus(
             @Parameter(description = "Campus ID") @PathVariable Long campusId) {
@@ -210,7 +210,7 @@ public class CampusController {
     }
 
     @PostMapping("/{campusId}/activate")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Activate campus", description = "Activate a campus")
     public ResponseEntity<ApiResponse<String>> activateCampus(
             @Parameter(description = "Campus ID") @PathVariable Long campusId) {
@@ -219,7 +219,7 @@ public class CampusController {
     }
 
     @PostMapping("/{campusId}/deactivate")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Deactivate campus", description = "Deactivate a campus")
     public ResponseEntity<ApiResponse<String>> deactivateCampus(
             @Parameter(description = "Campus ID") @PathVariable Long campusId) {
@@ -228,7 +228,7 @@ public class CampusController {
     }
 
     @PostMapping("/{campusId}/feature")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Feature campus", description = "Mark a campus as featured")
     public ResponseEntity<ApiResponse<String>> featureCampus(
             @Parameter(description = "Campus ID") @PathVariable Long campusId) {
@@ -237,7 +237,7 @@ public class CampusController {
     }
 
     @PostMapping("/{campusId}/unfeature")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Unfeature campus", description = "Remove featured status from a campus")
     public ResponseEntity<ApiResponse<String>> unfeatureCampus(
             @Parameter(description = "Campus ID") @PathVariable Long campusId) {
@@ -246,7 +246,7 @@ public class CampusController {
     }
 
     @PostMapping("/{campusId}/image")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Upload campus image", description = "Upload an image for a campus")
     public ResponseEntity<ApiResponse<Map<String, Object>>> uploadCampusImage(
             @Parameter(description = "Campus ID") @PathVariable Long campusId,
@@ -269,14 +269,14 @@ public class CampusController {
     }
 
     @GetMapping("/stats")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Get campus statistics", description = "Get accurate campus stats from the database (Admin only)")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCampusStats() {
         return ResponseEntity.ok(ApiResponse.success("Campus stats retrieved successfully", campusService.getCampusStats()));
     }
 
     @GetMapping("/{campusId}/analytics")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Get campus analytics", description = "Get per-campus analytics computed from real database records")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCampusAnalytics(
             @Parameter(description = "Campus ID") @PathVariable Long campusId) {
@@ -285,7 +285,7 @@ public class CampusController {
     }
 
     @DeleteMapping("/{campusId}/image")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Delete campus image", description = "Delete the image for a campus")
     public ResponseEntity<ApiResponse<String>> deleteCampusImage(
             @Parameter(description = "Campus ID") @PathVariable Long campusId) {

@@ -67,6 +67,11 @@ public class MarriageCertificateService {
         List<MarriageCertificate> certificates;
         if (isSuperAdminOrAdmin(currentUser)) {
             certificates = marriageCertificateRepository.findAllByOrderBySubmittedAtDesc();
+        } else if (isNationalLeader(currentUser)) {
+            certificates = marriageCertificateRepository.findByRegionForNationalLeader(currentUser.getRegion());
+        } else if (isNationalLeaderOrCoordinator(currentUser)) {
+            certificates = marriageCertificateRepository.findByUserIdOrSameCampusCoordinators(
+                    currentUser.getId(), userService.resolveCampusName(currentUser.getEmail()));
         } else {
             certificates = marriageCertificateRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
         }
@@ -82,7 +87,16 @@ public class MarriageCertificateService {
                 .orElseThrow(() -> new ResourceNotFoundException("Marriage certificate not found with id: " + id));
 
         User currentUser = userService.getCurrentUser();
-        if (!isSuperAdminOrAdmin(currentUser) && !certificate.getUser().getId().equals(currentUser.getId())) {
+        boolean isCreator = certificate.getUser() != null
+                && certificate.getUser().getId().equals(currentUser.getId());
+        boolean sameRegion = isNationalLeader(currentUser)
+                && currentUser.getRegion() != null
+                && certificate.getUser() != null
+                && currentUser.getRegion().equalsIgnoreCase(certificate.getUser().getRegion());
+        boolean sameCampus = !isNationalLeader(currentUser)
+                && !isSuperAdminOrAdmin(currentUser)
+                && isSameCampusCertificate(currentUser, certificate);
+        if (!isSuperAdminOrAdmin(currentUser) && !isCreator && !sameRegion && !sameCampus) {
             throw new RuntimeException("Access denied");
         }
 
@@ -94,7 +108,16 @@ public class MarriageCertificateService {
                 .orElseThrow(() -> new ResourceNotFoundException("Marriage certificate not found with id: " + id));
 
         User currentUser = userService.getCurrentUser();
-        if (!isSuperAdminOrAdmin(currentUser) && !certificate.getUser().getId().equals(currentUser.getId())) {
+        boolean isCreator = certificate.getUser() != null
+                && certificate.getUser().getId().equals(currentUser.getId());
+        boolean sameRegion = isNationalLeader(currentUser)
+                && currentUser.getRegion() != null
+                && certificate.getUser() != null
+                && currentUser.getRegion().equalsIgnoreCase(certificate.getUser().getRegion());
+        boolean sameCampus = !isNationalLeader(currentUser)
+                && !isSuperAdminOrAdmin(currentUser)
+                && isSameCampusCertificate(currentUser, certificate);
+        if (!isSuperAdminOrAdmin(currentUser) && !isCreator && !sameRegion && !sameCampus) {
             throw new RuntimeException("Access denied");
         }
 
@@ -185,5 +208,43 @@ public class MarriageCertificateService {
                     String role = ur.getRole().getName();
                     return role.equals("SUPER_ADMIN") || role.equals("ADMIN");
                 });
+    }
+
+    private boolean isNationalLeaderOrCoordinator(User user) {
+        return user.getUserRoles().stream()
+                .filter(UserRole::getIsActive)
+                .anyMatch(ur -> {
+                    String role = ur.getRole().getName();
+                    return role.equals("NATIONAL_LEADER") || role.equals("COORDINATOR");
+                });
+    }
+
+    private boolean isNationalLeader(User user) {
+        return user.getUserRoles().stream()
+                .filter(UserRole::getIsActive)
+                .anyMatch(ur -> {
+                    String role = ur.getRole().getName();
+                    return role.equals("NATIONAL_LEADER");
+                });
+    }
+
+    private boolean isSameCampusCertificate(User user, MarriageCertificate certificate) {
+        if (certificate.getUser() == null || isNationalLeader(user) || isSuperAdminOrAdmin(user)) {
+            return false;
+        }
+        if (certificate.getUser().getId().equals(user.getId())) {
+            return true;
+        }
+        boolean submitterIsCoordinator = certificate.getUser().getUserRoles().stream()
+                .filter(UserRole::getIsActive)
+                .anyMatch(ur -> ur.getRole().getName().equals("COORDINATOR"));
+        if (!submitterIsCoordinator) {
+            return false;
+        }
+        String campus = userService.resolveCampusName(user.getEmail());
+        if (campus == null) {
+            return false;
+        }
+        return campus.equalsIgnoreCase(userService.resolveCampusName(certificate.getUser().getEmail()));
     }
 }

@@ -38,6 +38,7 @@ public class DataInitializer implements CommandLineRunner {
         "SUPER_ADMIN", "Super Administrator with full system access",
         "ADMIN",       "Administrator with regional system access",
         "COORDINATOR", "Coordinator with limited administrative access",
+        "NATIONAL_LEADER", "National Leader with regional access to forms, reports, and campus management",
         "USER",        "Standard user with basic access",
         "STUDENT",     "Student with access to courses and learning materials",
         "CUSTOMER",    "Customer with access to e-commerce features"
@@ -65,6 +66,7 @@ public class DataInitializer implements CommandLineRunner {
         "SUPER_ADMIN", ALL_MENU_PERMISSIONS,
         "ADMIN",       List.of("MENU_CAMPUSES", "MENU_SUBMISSIONS", "MENU_EVENTS"),
         "COORDINATOR", List.of("MENU_REPORTS"),
+        "NATIONAL_LEADER", List.of("MENU_CAMPUSES", "MENU_SUBMISSIONS", "MENU_EVENTS", "MENU_REPORTS", "MENU_FORMS"),
         "USER",        List.of(),
         "STUDENT",     List.of(),
         "CUSTOMER",    List.of()

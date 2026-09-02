@@ -106,31 +106,33 @@ public class FormSubmissionController {
 
 
     /**
-     * Get all submissions for a form (ADMIN/COORDINATOR/SUPER_ADMIN)
+     * Get all submissions for a form (ADMIN/COORDINATOR/SUPER_ADMIN/NATIONAL_LEADER)
      */
     @GetMapping("/admin/form/{formId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR') or hasRole('NATIONAL_LEADER')")
     public ResponseEntity<Page<FormSubmissionResponse>> getFormSubmissions(
             @PathVariable Long formId,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(5000) int size
+            @RequestParam(defaultValue = "10") @Min(1) @Max(5000) int size,
+            @AuthenticationPrincipal User currentUser
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "submittedAt"));
-        Page<FormSubmissionResponse> submissions = submissionService.getFormSubmissions(formId, pageable);
+        Page<FormSubmissionResponse> submissions = submissionService.getFormSubmissions(formId, pageable, currentUser);
         return ResponseEntity.ok(submissions);
     }
 
     /**
-     * Get all submissions across all forms (ADMIN/COORDINATOR/SUPER_ADMIN)
+     * Get all submissions across all forms (ADMIN/COORDINATOR/SUPER_ADMIN/NATIONAL_LEADER)
      */
     @GetMapping("/admin/all")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR') or hasRole('NATIONAL_LEADER')")
     public ResponseEntity<Page<FormSubmissionResponse>> getAllSubmissions(
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(5000) int size
+            @RequestParam(defaultValue = "10") @Min(1) @Max(5000) int size,
+            @AuthenticationPrincipal User currentUser
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "submittedAt"));
-        Page<FormSubmissionResponse> submissions = submissionService.getAllSubmissions(pageable);
+        Page<FormSubmissionResponse> submissions = submissionService.getAllSubmissions(pageable, currentUser);
         return ResponseEntity.ok(submissions);
     }
 
@@ -225,11 +227,11 @@ public class FormSubmissionController {
     }
 
     /**
-     * Generate presigned URL for form submission file download (ADMIN/SUPER_ADMIN only)
+     * Generate presigned URL for form submission file download
      * This is a secure endpoint that validates file access before generating download URLs
      */
     @GetMapping("/admin/file/download")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     public ResponseEntity<Map<String, Object>> getFormSubmissionFileUrl(
             @RequestParam String s3Key,
             @RequestParam(defaultValue = "1") int expirationHours

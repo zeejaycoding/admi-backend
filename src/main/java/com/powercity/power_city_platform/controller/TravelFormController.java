@@ -55,7 +55,7 @@ public class TravelFormController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Update travel form status", description = "Approve or reject a travel form submission")
     public ResponseEntity<ApiResponse<TravelFormResponse>> updateTravelFormStatus(
             @PathVariable Long id,
@@ -69,7 +69,7 @@ public class TravelFormController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Delete travel form", description = "Delete a travel form submission")
     public ResponseEntity<ApiResponse<Void>> deleteTravelForm(@PathVariable Long id) {
         try {

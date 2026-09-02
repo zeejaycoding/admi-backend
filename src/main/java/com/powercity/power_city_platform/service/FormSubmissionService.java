@@ -128,24 +128,42 @@ public class FormSubmissionService {
     }
 
     @Transactional(readOnly = true)
-    public Page<FormSubmissionResponse> getFormSubmissions(Long formId, Pageable pageable) {
+    public Page<FormSubmissionResponse> getFormSubmissions(Long formId, Pageable pageable, User currentUser) {
         logger.info("Fetching submissions for form ID: {}", formId);
 
         Form form = formRepository.findByIdAndIsActiveTrue(formId)
                 .orElseThrow(() -> new ResourceNotFoundException("Form not found with ID: " + formId));
 
-        Page<FormSubmission> submissions = submissionRepository.findByFormAndArchivedFalseOrderBySubmittedAtDesc(form, pageable);
+        Page<FormSubmission> submissions;
+        if (currentUser != null && isNationalLeader(currentUser) && currentUser.getRegion() != null) {
+            submissions = submissionRepository.findByFormAndArchivedFalseAndUserRegionOrderBySubmittedAtDesc(
+                    form, currentUser.getRegion(), pageable);
+        } else {
+            submissions = submissionRepository.findByFormAndArchivedFalseOrderBySubmittedAtDesc(form, pageable);
+        }
 
         return submissions.map(this::convertToSubmissionResponse);
     }
 
     @Transactional(readOnly = true)
-    public Page<FormSubmissionResponse> getAllSubmissions(Pageable pageable) {
+    public Page<FormSubmissionResponse> getAllSubmissions(Pageable pageable, User currentUser) {
         logger.info("Fetching all form submissions");
 
-        Page<FormSubmission> submissions = submissionRepository.findAllByArchivedFalseOrderBySubmittedAtDesc(pageable);
+        Page<FormSubmission> submissions;
+        if (currentUser != null && isNationalLeader(currentUser) && currentUser.getRegion() != null) {
+            submissions = submissionRepository.findByArchivedFalseAndUserRegionOrderBySubmittedAtDesc(
+                    currentUser.getRegion(), pageable);
+        } else {
+            submissions = submissionRepository.findAllByArchivedFalseOrderBySubmittedAtDesc(pageable);
+        }
 
         return submissions.map(this::convertToSubmissionResponse);
+    }
+
+    private boolean isNationalLeader(User user) {
+        return user.getUserRoles() != null && user.getUserRoles().stream()
+                .filter(ur -> Boolean.TRUE.equals(ur.getIsActive()))
+                .anyMatch(ur -> ur.getRole() != null && "NATIONAL_LEADER".equals(ur.getRole().getName()));
     }
 
     @Transactional(readOnly = true)

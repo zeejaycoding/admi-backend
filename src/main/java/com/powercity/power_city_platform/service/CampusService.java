@@ -17,6 +17,8 @@ import com.powercity.power_city_platform.repository.ChildDedicationRepository;
 import com.powercity.power_city_platform.repository.MarriageCertificateRepository;
 import com.powercity.power_city_platform.repository.TravelFormRepository;
 import com.powercity.power_city_platform.repository.ReportRepository;
+import com.powercity.power_city_platform.repository.UserRepository;
+import com.powercity.power_city_platform.util.RegionScope;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,14 +48,33 @@ public class CampusService {
     private final MarriageCertificateRepository marriageCertificateRepository;
     private final TravelFormRepository travelFormRepository;
     private final ReportRepository reportRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public Map<String, Object> getCampusStats() {
-        long total = campusRepository.count();
-        long active = campusRepository.countAllActiveCampuses();
+        String regionScope = RegionScope.resolve(userRepository);
+
+        long total;
+        long active;
+        long featured;
+        int totalRegions;
+
+        if (regionScope != null) {
+            // NATIONAL_LEADER: stats for their region only
+            total = campusRepository.findByRegion(regionScope).size();
+            active = campusRepository.findByRegionAndIsActive(regionScope, true).size();
+            featured = campusRepository.findByIsFeaturedTrue().stream()
+                    .filter(c -> regionScope.equalsIgnoreCase(c.getRegion()))
+                    .count();
+            totalRegions = 1;
+        } else {
+            total = campusRepository.count();
+            active = campusRepository.countAllActiveCampuses();
+            featured = campusRepository.countByIsFeaturedTrue();
+            totalRegions = campusRepository.findDistinctRegions().size();
+        }
+
         long inactive = total - active;
-        long featured = campusRepository.countByIsFeaturedTrue();
-        int totalRegions = campusRepository.findDistinctRegions().size();
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalCampuses", total);
         stats.put("activeCampuses", active);
@@ -183,7 +204,16 @@ public class CampusService {
     }
 
     // Create Campus
+    @Transactional
     public CampusResponse createCampus(CreateCampusRequest request) {
+        String regionScope = RegionScope.resolve(userRepository);
+
+        // NATIONAL_LEADER can only create campuses in their own region
+        if (regionScope != null) {
+            request.setRegion(regionScope);
+            request.setCountry(regionScope);
+        }
+
         // Validate unique name per region
         if (campusRepository.existsByNameAndRegion(request.getName(), request.getRegion())) {
             throw new IllegalArgumentException("Campus with name '" + request.getName() + "' already exists in region '" + request.getRegion() + "'");
@@ -201,15 +231,28 @@ public class CampusService {
         campus.setCreatedAt(LocalDateTime.now());
         campus.setUpdatedAt(LocalDateTime.now());
 
+        reassignCoordinator(campus);
+
         Campus savedCampus = campusRepository.save(campus);
 
         return mapEntityToResponse(savedCampus);
     }
 
     // Update Campus
+    @Transactional
     public CampusResponse updateCampus(Long campusId, UpdateCampusRequest request) {
         Campus campus = campusRepository.findById(campusId)
                 .orElseThrow(() -> new IllegalArgumentException("Campus not found with id: " + campusId));
+
+        String regionScope = RegionScope.resolve(userRepository);
+        // NATIONAL_LEADER can only update campuses within their own region
+        if (regionScope != null) {
+            if (!regionScope.equals(campus.getRegion()) && campus.getRegion() != null) {
+                throw new IllegalArgumentException("You can only manage campuses in your region");
+            }
+            request.setRegion(regionScope);
+            request.setCountry(regionScope);
+        }
 
         // Validate unique name per region if name or region is being updated
         if (request.getName() != null && request.getRegion() != null) {
@@ -228,6 +271,8 @@ public class CampusService {
         mapUpdateRequestToEntity(request, campus);
         campus.setUpdatedAt(LocalDateTime.now());
 
+        reassignCoordinator(campus);
+
         Campus updatedCampus = campusRepository.save(campus);
 
         return mapEntityToResponse(updatedCampus);
@@ -244,6 +289,12 @@ public class CampusService {
     // Search Campuses
     @Transactional(readOnly = true)
     public CampusListResponse searchCampuses(CampusSearchRequest request) {
+        // For NATIONAL_LEADER, force region filter to their assigned region
+        String regionScope = RegionScope.resolve(userRepository);
+        if (regionScope != null && (request.getRegion() == null || request.getRegion().isEmpty())) {
+            request.setRegion(regionScope);
+        }
+
         Sort sort = Sort.by(Sort.Direction.fromString(request.getSortDirection()), request.getSortBy());
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
 
@@ -344,6 +395,22 @@ public class CampusService {
     }
 
     // Private helper methods
+    // Enforces one-campus-per-coordinator: when a coordinator email is assigned to a campus,
+    // any other campus previously pointing at that email is released (set to null). This means
+    // a coordinator moved to a new campus frees the old one.
+    private void reassignCoordinator(Campus assignedCampus) {
+        String email = assignedCampus.getCoordinatorEmail();
+        if (email == null || email.isBlank()) {
+            return;
+        }
+        List<Campus> candidates = campusRepository.findByCoordinatorEmailIgnoreCase(email);
+        for (Campus candidate : candidates) {
+            if (assignedCampus.getId() == null || !candidate.getId().equals(assignedCampus.getId())) {
+                candidate.setCoordinatorEmail("");
+            }
+        }
+    }
+
     private void mapCreateRequestToEntity(CreateCampusRequest request, Campus campus) {
         campus.setName(request.getName());
         campus.setRegion(request.getRegion());

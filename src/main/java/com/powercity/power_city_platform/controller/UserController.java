@@ -76,7 +76,7 @@ public class UserController {
 
     @GetMapping("/all")
     @Operation(summary = "Get all users", description = "Get all users with pagination (Admin only)")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     public ResponseEntity<ApiResponse<Page<UserListResponse>>> getAllUsers(
             @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "20") @Min(1) @Max(500) int size,

@@ -26,9 +26,14 @@ public interface CampusRepository extends JpaRepository<Campus, Long> {
 
        Optional<Campus> findByNameAndRegion(String name, String region);
 
-       // Find the active campus managed by a given coordinator email (case-insensitive)
-       @Query("SELECT c FROM Campus c WHERE LOWER(c.coordinatorEmail) = LOWER(:coordinatorEmail) AND c.isActive = true")
-       Optional<Campus> findActiveByCoordinatorEmail(@Param("coordinatorEmail") String coordinatorEmail);
+       // Find the active campus managed by a given coordinator email (case-insensitive).
+       // Uses findFirst so a coordinator mapped to multiple campuses does not break resolution.
+       Optional<Campus> findFirstByCoordinatorEmailIgnoreCaseAndIsActiveTrue(String coordinatorEmail);
+
+       // All campuses (active or not) assigned to a coordinator email. Used to enforce
+       // one-campus-per-coordinator: when a coordinator is assigned to a new campus, any
+       // other campus previously pointing at that email is released.
+       List<Campus> findByCoordinatorEmailIgnoreCase(String coordinatorEmail);
 
        // Region-based queries
        @Query("SELECT c FROM Campus c WHERE c.region = :region AND c.isActive = true ORDER BY c.name ASC")

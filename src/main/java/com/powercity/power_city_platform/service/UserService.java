@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -249,8 +250,30 @@ public class UserService {
                 Sort.Direction.fromString(request.sortDirection()),
                 request.sortBy());
 
+        User currentUser = getCurrentUser();
+        if (isNationalLeader(currentUser)) {
+            // NL sees only coordinators within their own region
+            List<User> coordinators = userRepository.findCoordinators(
+                    currentUser.getRegion(), request.searchTerm());
+            int total = coordinators.size();
+            int from = (int) Math.min(pageable.getOffset(), total);
+            int to = (int) Math.min(from + pageable.getPageSize(), total);
+            List<UserListResponse> content = coordinators.subList(from, to).stream()
+                    .map(this::createUserListResponse)
+                    .collect(Collectors.toList());
+            return new PageImpl<>(content, pageable, total);
+        }
+
         Page<User> users = userRepository.findAll(pageable);
         return users.map(this::createUserListResponse);
+    }
+
+    private boolean isNationalLeader(User user) {
+        if (user == null || user.getUserRoles() == null) return false;
+        return user.getUserRoles().stream()
+                .filter(UserRole::getIsActive)
+                .map(ur -> ur.getRole().getName())
+                .anyMatch(name -> "NATIONAL_LEADER".equalsIgnoreCase(name));
     }
 
     // Create user directly (Super Admin function)
@@ -407,12 +430,12 @@ public class UserService {
                 resolveCampusName(user.getEmail()));
     }
 
-    private String resolveCampusName(String email) {
+    public String resolveCampusName(String email) {
         if (email == null || email.isBlank()) {
             return null;
         }
         try {
-            return campusRepository.findActiveByCoordinatorEmail(email)
+            return campusRepository.findFirstByCoordinatorEmailIgnoreCaseAndIsActiveTrue(email)
                     .map(campus -> campus.getName())
                     .orElse(null);
         } catch (Exception e) {

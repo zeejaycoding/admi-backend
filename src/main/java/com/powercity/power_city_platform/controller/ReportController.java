@@ -35,7 +35,7 @@ public class ReportController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Create coordinator report", description = "Submit a new report with expenses and remittance receipt files")
     public ResponseEntity<ApiResponse<Report>> createReport(
             @RequestParam("date") String date,
@@ -73,7 +73,7 @@ public class ReportController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Get all reports", description = "Retrieve list of reports (Admins see all; Coordinators see their own submissions)")
     public ResponseEntity<ApiResponse<List<Report>>> getAllReports() {
         User currentUser = userService.getCurrentUser();
@@ -82,7 +82,7 @@ public class ReportController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Get report by ID", description = "Retrieve details of a specific report")
     public ResponseEntity<ApiResponse<Report>> getReportById(@PathVariable Long id) {
         User currentUser = userService.getCurrentUser();
@@ -92,7 +92,7 @@ public class ReportController {
 
     @PutMapping("/{id}/status")
     @Transactional
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Update report status", description = "Approve or update status of a report")
     public ResponseEntity<ApiResponse<Report>> updateReportStatus(
             @PathVariable Long id,
@@ -104,7 +104,7 @@ public class ReportController {
 
     @PutMapping("/{id}")
     @Transactional
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Update report", description = "Edit a report's name and info section")
     public ResponseEntity<ApiResponse<Report>> updateReport(
             @PathVariable Long id,
@@ -131,7 +131,7 @@ public class ReportController {
 
     @DeleteMapping("/{id}")
     @Transactional
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Delete report", description = "Delete a report")
     public ResponseEntity<ApiResponse<Void>> deleteReport(@PathVariable Long id) {
         User currentUser = userService.getCurrentUser();
@@ -140,7 +140,7 @@ public class ReportController {
     }
 
     @GetMapping("/{id}/receipts/{receiptId}/download")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Download report receipt", description = "Stream a remittance receipt file for a report")
     public ResponseEntity<?> downloadReceipt(@PathVariable Long id, @PathVariable Long receiptId) {
         try {
@@ -158,7 +158,7 @@ public class ReportController {
     }
 
     @GetMapping("/analytics")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('COORDINATOR') or hasRole('NATIONAL_LEADER')")
     @Operation(summary = "Get report analytics", description = "Retrieve reporting summary statistics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getReportAnalytics() {
         User currentUser = userService.getCurrentUser();
