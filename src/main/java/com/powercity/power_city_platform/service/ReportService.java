@@ -48,6 +48,7 @@ public class ReportService {
             Double partnership,
             Double papaHonour,
             Double offerings,
+            String currency,
             List<Map<String, Object>> rawExpenses,
             List<MultipartFile> files,
             User currentUser) {
@@ -58,6 +59,16 @@ public class ReportService {
 
         double totalExpenditure = 0.0;
         List<ReportExpense> expenses = new ArrayList<>();
+
+        String reportCurrency = "USD";
+        if (currency != null && !currency.trim().isEmpty()) {
+            try {
+                com.powercity.power_city_platform.enums.Currency.valueOf(currency);
+                reportCurrency = currency;
+            } catch (IllegalArgumentException ignored) {
+                // fall back to USD for invalid currency codes
+            }
+        }
 
         Report report = Report.builder()
                 .date(date)
@@ -71,6 +82,7 @@ public class ReportService {
                 .papaHonour(papaHonour != null ? papaHonour : 0.0)
                 .offerings(offerings != null ? offerings : 0.0)
                 .income(totalIncome)
+                .currency(reportCurrency)
                 .status("Pending")
                 .expenses(expenses)
                 .receipts(new ArrayList<>())
@@ -179,7 +191,7 @@ public class ReportService {
      */
     public Report updateReport(Long id, LocalDate date, String country, String nationalLeader,
                                String campus, String coordinator, String zonalLeader,
-                               String summary, User currentUser) {
+                               String summary, String currency, User currentUser) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
 
@@ -196,6 +208,14 @@ public class ReportService {
         if (coordinator != null) report.setCoordinator(coordinator);
         if (zonalLeader != null) report.setZonalLeader(zonalLeader);
         if (summary != null) report.setSummary(summary);
+        if (currency != null && !currency.trim().isEmpty()) {
+            try {
+                com.powercity.power_city_platform.enums.Currency.valueOf(currency);
+                report.setCurrency(currency);
+            } catch (IllegalArgumentException ignored) {
+                // ignore invalid currency codes
+            }
+        }
 
         report.setUpdatedBy(currentUser.getId());
         Report updated = reportRepository.save(report);

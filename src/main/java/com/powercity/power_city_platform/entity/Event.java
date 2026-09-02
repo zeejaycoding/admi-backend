@@ -38,6 +38,9 @@ public class Event extends BaseEntity {
     @Column(name = "ticket_type")
     private String ticketType = "FREE";
 
+    @Column(name = "ticket_currency", length = 10)
+    private String ticketCurrency = "USD";
+
     @Column(name = "ticket_price", precision = 10, scale = 2)
     private java.math.BigDecimal ticketPrice;
 
@@ -149,6 +152,14 @@ public class Event extends BaseEntity {
 
     public void setTicketType(String ticketType) {
         this.ticketType = ticketType;
+    }
+
+    public String getTicketCurrency() {
+        return ticketCurrency;
+    }
+
+    public void setTicketCurrency(String ticketCurrency) {
+        this.ticketCurrency = ticketCurrency;
     }
 
     public java.math.BigDecimal getTicketPrice() {

@@ -73,13 +73,14 @@ public class EventController {
             @RequestParam(required = false) LocalDate registrationDeadline,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String ticketType,
+            @RequestParam(required = false) String ticketCurrency,
             @RequestParam(required = false) BigDecimal ticketPrice,
             @RequestParam(required = false) MultipartFile thumbnail) {
         User currentUser = userService.getCurrentUser();
         EventResponseDTO event = eventService.createEvent(
                 title, description, module, eventDate,
                 timeEstimate, registrationDeadline, location,
-                ticketType, ticketPrice, thumbnail, currentUser
+                ticketType, ticketCurrency, ticketPrice, thumbnail, currentUser
         );
         return ResponseEntity.ok(ApiResponse.success("Event created successfully", event));
     }
@@ -98,13 +99,14 @@ public class EventController {
             @RequestParam(required = false) String location,
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(required = false) String ticketType,
+            @RequestParam(required = false) String ticketCurrency,
             @RequestParam(required = false) BigDecimal ticketPrice,
             @RequestParam(required = false) MultipartFile thumbnail) {
         User currentUser = userService.getCurrentUser();
         EventResponseDTO event = eventService.updateEvent(
                 id, title, description, module, eventDate,
                 timeEstimate, registrationDeadline, location,
-                isActive, ticketType, ticketPrice, thumbnail, currentUser
+                isActive, ticketType, ticketCurrency, ticketPrice, thumbnail, currentUser
         );
         return ResponseEntity.ok(ApiResponse.success("Event updated successfully", event));
     }

@@ -56,6 +56,9 @@ public class Report extends BaseEntity {
     @Column(name = "balance")
     private Double balance = 0.0;
 
+    @Column(name = "currency", length = 10)
+    private String currency = "USD";
+
     @Column(name = "status", nullable = false)
     private String status = "Pending";
 

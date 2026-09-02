@@ -67,7 +67,7 @@ public class EventService {
     // Create a new event
     public EventResponseDTO createEvent(String title, String description, CourseCategory module,
                                         LocalDate eventDate, String timeEstimate, LocalDate registrationDeadline,
-                                        String location, String ticketType, java.math.BigDecimal ticketPrice,
+                                        String location, String ticketType, String ticketCurrency, java.math.BigDecimal ticketPrice,
                                         MultipartFile thumbnailFile, User currentUser) {
         if (eventRepository.existsByTitle(title)) {
             throw new RuntimeException("Event with this title already exists");
@@ -85,6 +85,14 @@ public class EventService {
                 event.setLocation(location);
             }
             event.setTicketType(ticketType != null ? ticketType : "FREE");
+            if (ticketCurrency != null && !ticketCurrency.trim().isEmpty()) {
+                try {
+                    com.powercity.power_city_platform.enums.Currency.fromCode(ticketCurrency);
+                    event.setTicketCurrency(ticketCurrency);
+                } catch (IllegalArgumentException ignored) {
+                    // fall back to default currency for invalid codes
+                }
+            }
             if (ticketPrice != null) event.setTicketPrice(ticketPrice);
             event.setIsActive(true);
             event.setCreatedBy(currentUser.getId());
@@ -115,7 +123,7 @@ public class EventService {
     // Update an existing event
     public EventResponseDTO updateEvent(Long id, String title, String description, CourseCategory module,
                                         LocalDate eventDate, String timeEstimate, LocalDate registrationDeadline,
-                                        String location, Boolean isActive, String ticketType, java.math.BigDecimal ticketPrice,
+                                        String location, Boolean isActive, String ticketType, String ticketCurrency, java.math.BigDecimal ticketPrice,
                                         MultipartFile thumbnailFile, User currentUser) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
@@ -136,6 +144,14 @@ public class EventService {
         if (location != null) event.setLocation(location);
         if (isActive != null) event.setIsActive(isActive);
         if (ticketType != null) event.setTicketType(ticketType);
+        if (ticketCurrency != null && !ticketCurrency.trim().isEmpty()) {
+            try {
+                com.powercity.power_city_platform.enums.Currency.fromCode(ticketCurrency);
+                event.setTicketCurrency(ticketCurrency);
+            } catch (IllegalArgumentException ignored) {
+                // fall back to existing currency for invalid codes
+            }
+        }
         if (ticketPrice != null) event.setTicketPrice(ticketPrice);
 
         if (thumbnailFile != null && !thumbnailFile.isEmpty()) {

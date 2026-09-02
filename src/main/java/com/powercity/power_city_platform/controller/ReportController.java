@@ -48,6 +48,7 @@ public class ReportController {
             @RequestParam(value = "partnership", defaultValue = "0.0") Double partnership,
             @RequestParam(value = "papaHonour", defaultValue = "0.0") Double papaHonour,
             @RequestParam(value = "offerings", defaultValue = "0.0") Double offerings,
+            @RequestParam(value = "currency", required = false) String currency,
             @RequestParam(value = "expenses", required = false) String expensesJson,
             @RequestParam(value = "files", required = false) List<MultipartFile> files) {
 
@@ -62,7 +63,7 @@ public class ReportController {
 
             Report createdReport = reportService.createReport(
                     parsedDate, country, nationalLeader, campus, coordinator, zonalLeader, summary,
-                    partnership, papaHonour, offerings, rawExpenses, files, currentUser
+                    partnership, papaHonour, offerings, currency, rawExpenses, files, currentUser
             );
 
             return ResponseEntity.ok(ApiResponse.success("Report submitted successfully", createdReport));
@@ -113,7 +114,8 @@ public class ReportController {
             @RequestParam(required = false) String campus,
             @RequestParam(required = false) String coordinator,
             @RequestParam(value = "zonalLeader", required = false) String zonalLeader,
-            @RequestParam(required = false) String summary) {
+            @RequestParam(required = false) String summary,
+            @RequestParam(required = false) String currency) {
         User currentUser = userService.getCurrentUser();
 
         LocalDate parsedDate = null;
@@ -122,7 +124,7 @@ public class ReportController {
         }
 
         Report updatedReport = reportService.updateReport(
-                id, parsedDate, country, nationalLeader, campus, coordinator, zonalLeader, summary, currentUser
+                id, parsedDate, country, nationalLeader, campus, coordinator, zonalLeader, summary, currency, currentUser
         );
         return ResponseEntity.ok(ApiResponse.success("Report updated successfully", updatedReport));
     }

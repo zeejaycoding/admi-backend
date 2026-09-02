@@ -27,6 +27,7 @@ public class EventResponseDTO {
     private Integer users; // Registration/Enrollment count to match frontend field "users"
     private String ticketType;
     private String ticketPrice;
+    private String ticketCurrency;
     private String organizerName;
     private String organizerEmail;
     private String organizerPhone;
@@ -54,6 +55,7 @@ public class EventResponseDTO {
         this.users = 0; // Default count
         this.ticketType = event.getTicketType();
         this.ticketPrice = event.getTicketPrice() != null ? event.getTicketPrice().toString() : null;
+        this.ticketCurrency = event.getTicketCurrency();
         this.organizerName = creator != null ? creator.getFullName() : "—";
         this.organizerEmail = creator != null ? creator.getEmail() : "—";
         this.organizerPhone = creator != null ? creator.getPhoneNumber() : "—";
@@ -219,6 +221,14 @@ public class EventResponseDTO {
 
     public void setTicketPrice(String ticketPrice) {
         this.ticketPrice = ticketPrice;
+    }
+
+    public String getTicketCurrency() {
+        return ticketCurrency;
+    }
+
+    public void setTicketCurrency(String ticketCurrency) {
+        this.ticketCurrency = ticketCurrency;
     }
 
     public String getOrganizerName() {
