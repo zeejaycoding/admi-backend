@@ -92,13 +92,14 @@ public class ReportController {
 
     @PutMapping("/{id}/status")
     @Transactional
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
-    @Operation(summary = "Update report status", description = "Approve or update status of a report")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Update report status", description = "Approve or reject a report (ADMIN only)")
     public ResponseEntity<ApiResponse<Report>> updateReportStatus(
             @PathVariable Long id,
-            @RequestParam String status) {
+            @RequestParam String status,
+            @RequestParam(required = false) String rejectionReason) {
         User currentUser = userService.getCurrentUser();
-        Report updatedReport = reportService.updateReportStatus(id, status, currentUser);
+        Report updatedReport = reportService.updateReportStatus(id, status, rejectionReason, currentUser);
         return ResponseEntity.ok(ApiResponse.success("Report status updated to " + status, updatedReport));
     }
 

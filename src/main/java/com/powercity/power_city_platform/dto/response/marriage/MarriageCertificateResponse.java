@@ -20,5 +20,6 @@ public record MarriageCertificateResponse(
         String additionalMessage,
         String certificateNumber,
         String status,
+        String rejectionReason,
         String submitted
 ) {}

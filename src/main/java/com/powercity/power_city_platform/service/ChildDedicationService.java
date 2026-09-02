@@ -129,6 +129,9 @@ public class ChildDedicationService {
 
     public ChildDedicationResponse updateStatus(Long id, String status, String rejectionReason) {
         User currentUser = userService.getCurrentUser();
+        if (!isSuperAdminOrAdmin(currentUser)) {
+            throw new RuntimeException("Only admins can approve or reject child dedications");
+        }
         ChildDedication dedication = childDedicationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Child dedication not found with id: " + id));
 

@@ -68,8 +68,8 @@ public class ChildDedicationController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
-    @Operation(summary = "Update child dedication status", description = "Approve or reject a child dedication certificate")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Update child dedication status", description = "Approve or reject a child dedication certificate (ADMIN only)")
     public ResponseEntity<ApiResponse<ChildDedicationResponse>> updateDedicationStatus(
             @PathVariable Long id,
             @Valid @RequestBody ChildDedicationStatusRequest request) {

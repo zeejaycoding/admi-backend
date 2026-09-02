@@ -62,6 +62,9 @@ public class Report extends BaseEntity {
     @Column(name = "status", nullable = false)
     private String status = "Pending";
 
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     @Builder.Default

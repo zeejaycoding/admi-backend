@@ -51,6 +51,9 @@ public class MarriageCertificate extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private String status = "Sent";
 
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt;
 
@@ -100,6 +103,9 @@ public class MarriageCertificate extends BaseEntity {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
 
     public LocalDateTime getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }

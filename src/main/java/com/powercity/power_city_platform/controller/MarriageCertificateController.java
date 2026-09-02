@@ -1,6 +1,7 @@
 package com.powercity.power_city_platform.controller;
 
 import com.powercity.power_city_platform.dto.request.marriage.MarriageCertificateCreateRequest;
+import com.powercity.power_city_platform.dto.request.marriage.MarriageCertificateStatusRequest;
 import com.powercity.power_city_platform.dto.response.common.ApiResponse;
 import com.powercity.power_city_platform.dto.response.marriage.MarriageCertificateResponse;
 import com.powercity.power_city_platform.service.MarriageCertificateService;
@@ -53,6 +54,21 @@ public class MarriageCertificateController {
             return ResponseEntity.ok(ApiResponse.success("Marriage certificate retrieved successfully", certificate));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Failed to retrieve marriage certificate: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Update marriage certificate status", description = "Approve or reject a marriage certificate (ADMIN only)")
+    public ResponseEntity<ApiResponse<MarriageCertificateResponse>> updateCertificateStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody MarriageCertificateStatusRequest request) {
+        try {
+            MarriageCertificateResponse certificate = marriageCertificateService.updateStatus(
+                    id, request.getStatus(), request.getRejectionReason());
+            return ResponseEntity.ok(ApiResponse.success("Marriage certificate " + request.getStatus().toLowerCase() + " successfully", certificate));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Failed to update status: " + e.getMessage()));
         }
     }
 

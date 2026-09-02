@@ -211,7 +211,7 @@ public class ReportService {
         return report;
     }
 
-    public Report updateReportStatus(Long id, String status, User currentUser) {
+    public Report updateReportStatus(Long id, String status, String rejectionReason, User currentUser) {
         if (!isAdminOrSuperAdmin(currentUser)) {
             throw new RuntimeException("Only admins can approve/reject reports");
         }
@@ -219,9 +219,19 @@ public class ReportService {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
 
-        report.setStatus(status);
+        String normalizedStatus = status.toUpperCase();
+        if (!"APPROVED".equals(normalizedStatus) && !"REJECTED".equals(normalizedStatus)) {
+            throw new IllegalArgumentException("Status must be APPROVED or REJECTED");
+        }
+
+        String displayStatus = "APPROVED".equals(normalizedStatus) ? "Approved" : "Rejected";
+        report.setStatus(displayStatus);
+        report.setRejectionReason("REJECTED".equals(normalizedStatus) ? rejectionReason : null);
         report.setUpdatedBy(currentUser.getId());
-        return reportRepository.save(report);
+        Report updated = reportRepository.save(report);
+        Hibernate.initialize(updated.getExpenses());
+        Hibernate.initialize(updated.getReceipts());
+        return updated;
     }
 
     /**

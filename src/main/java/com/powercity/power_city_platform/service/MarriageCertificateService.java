@@ -124,6 +124,30 @@ public class MarriageCertificateService {
         marriageCertificateRepository.delete(certificate);
     }
 
+    public MarriageCertificateResponse updateStatus(Long id, String status, String rejectionReason) {
+        User currentUser = userService.getCurrentUser();
+        if (!isSuperAdminOrAdmin(currentUser)) {
+            throw new RuntimeException("Only admins can approve or reject marriage certificates");
+        }
+
+        MarriageCertificate certificate = marriageCertificateRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Marriage certificate not found with id: " + id));
+
+        String normalizedStatus = status.toUpperCase();
+        if (!"APPROVED".equals(normalizedStatus) && !"REJECTED".equals(normalizedStatus)) {
+            throw new IllegalArgumentException("Status must be APPROVED or REJECTED");
+        }
+
+        String displayStatus = "APPROVED".equals(normalizedStatus) ? "Approved" : "Rejected";
+        certificate.setStatus(displayStatus);
+        if ("REJECTED".equals(normalizedStatus)) {
+            certificate.setRejectionReason(rejectionReason);
+        }
+
+        MarriageCertificate saved = marriageCertificateRepository.save(certificate);
+        return mapToResponse(saved);
+    }
+
     private void sendCertificateEmails(MarriageCertificate certificate, String additionalMessage) {
         String marriageDateStr = certificate.getMarriageDate() != null
                 ? certificate.getMarriageDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy")) : "";
@@ -197,6 +221,7 @@ public class MarriageCertificateService {
                 certificate.getAdditionalMessage(),
                 certificate.getCertificateNumber(),
                 certificate.getStatus(),
+                certificate.getRejectionReason(),
                 submittedStr
         );
     }
