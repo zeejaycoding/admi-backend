@@ -128,6 +128,15 @@ public class CoordinatorChatWebSocketHandler extends TextWebSocketHandler {
                             .orElse(null);
                     CallResponse callResponse = null;
                     switch (action) {
+                        case "rtc": {
+                            // Relay WebRTC signaling (SDP offer/answer + ICE candidates) to the peer
+                            JsonNode rtc = payload.path("rtc");
+                            if (otherId != null) {
+                                sendToUser(otherId, msg("rtc", Map.of("conversationId", conversationId, "userId", userId, "rtc", rtc)));
+                            }
+                            sendToUser(userId, msg("rtc_ack", Map.of("conversationId", conversationId)));
+                            return;
+                        }
                         case "offer": {
                             CallType callType = CallType.valueOf(payload.path("callType").asText("AUDIO"));
                             callResponse = chatService.initiateCallFromSocket(conversationId, userId, callType);

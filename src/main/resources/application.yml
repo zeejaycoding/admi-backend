@@ -53,6 +53,12 @@ spring:
           batch_size: 5
         order_inserts: true
         order_updates: true
+      # Do NOT re-validate persisted entities on every flush/commit. The REST
+      # layer already validates request bodies (@Valid on DTOs), and legacy rows
+      # (e.g. campuses with region "South West") violate outdated entity-level
+      # @Pattern/@NotBlank constraints, which turned ANY update to those rows
+      # into an unrecoverable "Could not commit JPA transaction" 500.
+      jakarta.persistence.validation.mode: none
 
   # Liquibase Configuration
   # DISABLED: JPA Hibernate handles schema creation via ddl-auto: update and
