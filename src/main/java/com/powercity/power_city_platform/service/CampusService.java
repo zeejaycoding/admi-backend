@@ -7,8 +7,16 @@ import com.powercity.power_city_platform.dto.response.campus.CampusResponse;
 import com.powercity.power_city_platform.dto.response.campus.CampusSummaryResponse;
 import com.powercity.power_city_platform.dto.response.campus.CampusListResponse;
 import com.powercity.power_city_platform.entity.Campus;
+import com.powercity.power_city_platform.entity.ChildDedication;
+import com.powercity.power_city_platform.entity.MarriageCertificate;
+import com.powercity.power_city_platform.entity.TravelForm;
+import com.powercity.power_city_platform.entity.Report;
 import com.powercity.power_city_platform.enums.Currency;
 import com.powercity.power_city_platform.repository.CampusRepository;
+import com.powercity.power_city_platform.repository.ChildDedicationRepository;
+import com.powercity.power_city_platform.repository.MarriageCertificateRepository;
+import com.powercity.power_city_platform.repository.TravelFormRepository;
+import com.powercity.power_city_platform.repository.ReportRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +27,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,6 +42,10 @@ public class CampusService {
     private static final Logger logger = LoggerFactory.getLogger(CampusService.class);
 
     private final CampusRepository campusRepository;
+    private final ChildDedicationRepository childDedicationRepository;
+    private final MarriageCertificateRepository marriageCertificateRepository;
+    private final TravelFormRepository travelFormRepository;
+    private final ReportRepository reportRepository;
 
     @Transactional(readOnly = true)
     public Map<String, Object> getCampusStats() {
@@ -49,6 +64,123 @@ public class CampusService {
     }
 
     private final S3FileService s3FileService;
+
+    // Per-campus real-data analytics (child dedications, marriages, travel forms, reports)
+    @Transactional(readOnly = true)
+    public Map<String, Object> getCampusAnalytics(Long campusId) {
+        Campus campus = campusRepository.findById(campusId)
+                .orElseThrow(() -> new IllegalArgumentException("Campus not found with id: " + campusId));
+        String name = campus.getName();
+
+        long childDedications = childDedicationRepository.countByCampus(name);
+        long marriages = marriageCertificateRepository.countByCampus(name);
+        long travelForms = travelFormRepository.countByCampus(name);
+        long reports = reportRepository.countByCampus(name);
+
+        Map<String, Object> totals = new LinkedHashMap<>();
+        totals.put("childDedications", childDedications);
+        totals.put("marriages", marriages);
+        totals.put("travelForms", travelForms);
+        totals.put("reports", reports);
+        totals.put("totalRecords", childDedications + marriages + travelForms + reports);
+
+        List<Map<String, Object>> registrationsByType = new ArrayList<>();
+        registrationsByType.add(registrationTypeEntry("Child Dedications", childDedications, "#33CFFF"));
+        registrationsByType.add(registrationTypeEntry("Marriages", marriages, "#40C4AA"));
+        registrationsByType.add(registrationTypeEntry("Travel Forms", travelForms, "#EEEFF2"));
+        registrationsByType.add(registrationTypeEntry("Reports", reports, "#FFD6A8"));
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("campusId", campusId);
+        result.put("campusName", name);
+        result.put("totals", totals);
+        result.put("registrationsByType", registrationsByType);
+        result.put("weeklyActivity", buildWeeklyActivity(name));
+        result.put("monthlyActivity", buildMonthlyActivity(name));
+        result.put("recentActivity", buildRecentActivity(name));
+        result.put("generatedAt", LocalDateTime.now().toString());
+        return result;
+    }
+
+    private Map<String, Object> registrationTypeEntry(String label, long count, String color) {
+        Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("name", label);
+        entry.put("count", count);
+        entry.put("color", color);
+        return entry;
+    }
+
+    private long countInRange(String campus, LocalDateTime start, LocalDateTime end) {
+        return childDedicationRepository.countByCampusAndSubmittedAtBetween(campus, start, end)
+                + marriageCertificateRepository.countByCampusAndSubmittedAtBetween(campus, start, end)
+                + travelFormRepository.countByCampusAndSubmittedAtBetween(campus, start, end)
+                + reportRepository.countByCampusAndCreatedAtBetween(campus, start, end);
+    }
+
+    private List<Map<String, Object>> buildWeeklyActivity(String campus) {
+        List<Map<String, Object>> weekly = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        for (int i = 6; i >= 0; i--) {
+            LocalDate day = today.minusDays(i);
+            LocalDateTime start = day.atStartOfDay();
+            LocalDateTime end = start.plusDays(1);
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("name", day.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH));
+            entry.put("count", countInRange(campus, start, end));
+            weekly.add(entry);
+        }
+        return weekly;
+    }
+
+    private List<Map<String, Object>> buildMonthlyActivity(String campus) {
+        List<Map<String, Object>> monthly = new ArrayList<>();
+        LocalDate current = LocalDate.now().withDayOfMonth(1);
+        for (int i = 11; i >= 0; i--) {
+            LocalDate monthStart = current.minusMonths(i);
+            LocalDateTime start = monthStart.atStartOfDay();
+            LocalDateTime end = monthStart.plusMonths(1).atStartOfDay();
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("name", monthStart.getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH));
+            entry.put("count", countInRange(campus, start, end));
+            monthly.add(entry);
+        }
+        return monthly;
+    }
+
+    private List<Map<String, Object>> buildRecentActivity(String campus) {
+        List<Map<String, Object>> entries = new ArrayList<>();
+
+        childDedicationRepository.findRecentByCampus(campus).stream().limit(3)
+                .forEach(c -> entries.add(activityEntry(c.getId(), "Child Dedication",
+                        "New child dedication submission", c.getSubmittedAt())));
+
+        marriageCertificateRepository.findRecentByCampus(campus).stream().limit(3)
+                .forEach(m -> entries.add(activityEntry(m.getId(), "Marriage",
+                        "New marriage certificate submission", m.getSubmittedAt())));
+
+        travelFormRepository.findRecentByCampus(campus).stream().limit(3)
+                .forEach(t -> entries.add(activityEntry(t.getId(), "Travel Form",
+                        "New travel form submission", t.getSubmittedAt())));
+
+        reportRepository.findRecentByCampus(campus).stream().limit(3)
+                .forEach(r -> entries.add(activityEntry(r.getId(), "Report",
+                        "Financial report submitted for " + r.getCountry(),
+                        r.getCreatedAt())));
+
+        entries.sort(Comparator.comparing(
+                (Map<String, Object> e) -> (LocalDateTime) e.get("date"), Comparator.reverseOrder()));
+
+        return entries.stream().limit(8).collect(Collectors.toList());
+    }
+
+    private Map<String, Object> activityEntry(Long id, String type, String activity, LocalDateTime date) {
+        Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("id", id);
+        entry.put("type", type);
+        entry.put("activity", activity);
+        entry.put("date", date);
+        return entry;
+    }
 
     // Create Campus
     public CampusResponse createCampus(CreateCampusRequest request) {

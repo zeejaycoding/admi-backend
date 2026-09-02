@@ -13,6 +13,7 @@ public record CallResponse(
         CallType callType,
         CallStatus status,
         String startedAt,
-        String endedAt
+        String endedAt,
+        String createdAt
 ) {
 }

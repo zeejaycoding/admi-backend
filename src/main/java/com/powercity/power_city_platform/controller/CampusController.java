@@ -275,6 +275,15 @@ public class CampusController {
         return ResponseEntity.ok(ApiResponse.success("Campus stats retrieved successfully", campusService.getCampusStats()));
     }
 
+    @GetMapping("/{campusId}/analytics")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Get campus analytics", description = "Get per-campus analytics computed from real database records")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCampusAnalytics(
+            @Parameter(description = "Campus ID") @PathVariable Long campusId) {
+        return ResponseEntity.ok(ApiResponse.success("Campus analytics retrieved successfully",
+                campusService.getCampusAnalytics(campusId)));
+    }
+
     @DeleteMapping("/{campusId}/image")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Delete campus image", description = "Delete the image for a campus")

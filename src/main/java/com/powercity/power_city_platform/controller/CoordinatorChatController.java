@@ -72,6 +72,14 @@ public class CoordinatorChatController {
         return ResponseEntity.ok(ApiResponse.success("Messages retrieved", chatService.getMessages(conversationId)));
     }
 
+    @GetMapping("/conversations/{conversationId}/calls")
+    @PreAuthorize("hasRole('COORDINATOR')")
+    @Operation(summary = "Get conversation calls", description = "Get all calls in a conversation")
+    public ResponseEntity<ApiResponse<List<CallResponse>>> getConversationCalls(
+            @PathVariable Long conversationId) {
+        return ResponseEntity.ok(ApiResponse.success("Calls retrieved", chatService.getCallsForConversation(conversationId)));
+    }
+
     @PostMapping("/messages")
     @PreAuthorize("hasRole('COORDINATOR')")
     @Operation(summary = "Send message", description = "Send a message in a conversation")

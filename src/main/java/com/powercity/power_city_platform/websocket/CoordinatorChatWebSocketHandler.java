@@ -157,6 +157,11 @@ public class CoordinatorChatWebSocketHandler extends TextWebSocketHandler {
                             callResponse = chatService.updateCallStatus(callId, CallStatus.CANCELLED, userId);
                             break;
                         }
+                        case "missed": {
+                            Long callId = payload.path("callId").asLong();
+                            callResponse = chatService.updateCallStatus(callId, CallStatus.MISSED, userId);
+                            break;
+                        }
                         case "end": {
                             Long callId = payload.path("callId").asLong();
                             callResponse = chatService.updateCallStatus(callId, CallStatus.ENDED, userId);

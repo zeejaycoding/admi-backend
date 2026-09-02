@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,4 +53,10 @@ public interface MarriageCertificateRepository extends JpaRepository<MarriageCer
     boolean existsDuplicate(@Param("groomName") String groomName,
                             @Param("brideName") String brideName,
                             @Param("marriageDate") LocalDate marriageDate);
+
+    @Query("SELECT COUNT(m) FROM MarriageCertificate m WHERE LOWER(m.campus) = LOWER(:campus) " +
+           "AND m.submittedAt >= :start AND m.submittedAt < :end")
+    long countByCampusAndSubmittedAtBetween(@Param("campus") String campus,
+                                            @Param("start") LocalDateTime start,
+                                            @Param("end") LocalDateTime end);
 }

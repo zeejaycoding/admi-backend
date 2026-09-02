@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,4 +68,10 @@ public interface ChildDedicationRepository extends JpaRepository<ChildDedication
     boolean existsDuplicate(@Param("childName") String childName,
                             @Param("dedicationDate") java.time.LocalDate dedicationDate,
                             @Param("parentName") String parentName);
+
+    @Query("SELECT COUNT(c) FROM ChildDedication c WHERE LOWER(c.campus) = LOWER(:campus) " +
+           "AND c.submittedAt >= :start AND c.submittedAt < :end")
+    long countByCampusAndSubmittedAtBetween(@Param("campus") String campus,
+                                            @Param("start") LocalDateTime start,
+                                            @Param("end") LocalDateTime end);
 }

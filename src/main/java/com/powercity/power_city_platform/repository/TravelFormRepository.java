@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -53,4 +54,10 @@ public interface TravelFormRepository extends JpaRepository<TravelForm, Long> {
 
     @Query("SELECT t FROM TravelForm t WHERE t.user.id = :userId ORDER BY t.submittedAt DESC")
     List<TravelForm> findByUserId(Long userId);
+
+    @Query("SELECT COUNT(t) FROM TravelForm t WHERE LOWER(t.campus) = LOWER(:campus) " +
+           "AND t.submittedAt >= :start AND t.submittedAt < :end")
+    long countByCampusAndSubmittedAtBetween(@Param("campus") String campus,
+                                            @Param("start") LocalDateTime start,
+                                            @Param("end") LocalDateTime end);
 }

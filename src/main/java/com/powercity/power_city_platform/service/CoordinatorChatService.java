@@ -253,6 +253,15 @@ public class CoordinatorChatService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<CallResponse> getCallsForConversation(Long conversationId) {
+        User current = currentUser();
+        getConversationForUser(conversationId, current.getId());
+        return callRepository.findByConversationId(conversationId).stream()
+                .map(this::toCallResponse)
+                .collect(Collectors.toList());
+    }
+
     // ---------------- Helpers ----------------
     private User currentUser() {
         return userService.getCurrentUser();
@@ -328,7 +337,8 @@ public class CoordinatorChatService {
                 call.getCallType(),
                 call.getStatus(),
                 call.getStartedAt() != null ? call.getStartedAt().format(FORMATTER) : null,
-                call.getEndedAt() != null ? call.getEndedAt().format(FORMATTER) : null
+                call.getEndedAt() != null ? call.getEndedAt().format(FORMATTER) : null,
+                call.getCreatedAt() != null ? call.getCreatedAt().format(FORMATTER) : null
         );
     }
 }
