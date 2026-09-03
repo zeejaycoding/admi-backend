@@ -93,3 +93,7 @@ databaseChangeLog:
   # Drop lesson duration check constraint
   - include:
       file: db/changelog/migrations/drop-lesson-duration-check-021.xml
+
+  # Add announcements table for regional communications
+  - include:
+      file: db/changelog/migrations/add-announcements-table-022.xml

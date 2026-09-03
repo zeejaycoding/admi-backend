@@ -180,7 +180,10 @@ public class MarriageCertificateService {
 
         boolean sent = emailService.sendEmail(request);
         if (!sent) {
-            throw new RuntimeException("Emails could not be sent to both partners. Please check the server logs for details.");
+            // Do not fail certificate creation if the email could not be delivered.
+            // The certificate is already saved; log and continue.
+            System.err.println("Marriage certificate " + certificate.getCertificateNumber()
+                    + " saved, but emails could not be sent to both partners.");
         }
     }
 

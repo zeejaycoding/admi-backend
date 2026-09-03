@@ -504,4 +504,26 @@ public class EmailService {
 
         sendEmail(request);
     }
+
+    @Async("emailTaskExecutor")
+    public void sendAnnouncementEmail(String email, String firstName, String announcementTitle,
+                                      String announcementBody, String senderName) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("firstName", firstName);
+        templateData.put("announcementTitle", announcementTitle);
+        templateData.put("announcementBody", announcementBody);
+        templateData.put("senderName", senderName);
+        templateData.put("portalLink", frontendUrl + "/admin/announcements");
+
+        SendEmailRequest request = new SendEmailRequest(
+                List.of(email),
+                "New Announcement from Your National Leader",
+                "announcement-notification",
+                templateData,
+                null,
+                null
+        );
+
+        sendEmail(request);
+    }
 }
