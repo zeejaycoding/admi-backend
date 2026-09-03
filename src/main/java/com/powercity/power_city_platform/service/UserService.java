@@ -2,7 +2,11 @@ package com.powercity.power_city_platform.service;
 
 import com.powercity.power_city_platform.dto.request.user.*;
 import com.powercity.power_city_platform.dto.response.user.*;
+import com.powercity.power_city_platform.entity.ChildDedication;
+import com.powercity.power_city_platform.entity.MarriageCertificate;
+import com.powercity.power_city_platform.entity.Report;
 import com.powercity.power_city_platform.entity.Role;
+import com.powercity.power_city_platform.entity.TravelForm;
 import com.powercity.power_city_platform.entity.User;
 import com.powercity.power_city_platform.entity.UserRole;
 import com.powercity.power_city_platform.exception.ResourceNotFoundException;
@@ -10,6 +14,10 @@ import com.powercity.power_city_platform.repository.RoleRepository;
 import com.powercity.power_city_platform.repository.UserRepository;
 import com.powercity.power_city_platform.repository.UserRoleRepository;
 import com.powercity.power_city_platform.repository.CampusRepository;
+import com.powercity.power_city_platform.repository.ChildDedicationRepository;
+import com.powercity.power_city_platform.repository.MarriageCertificateRepository;
+import com.powercity.power_city_platform.repository.ReportRepository;
+import com.powercity.power_city_platform.repository.TravelFormRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +52,10 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final S3FileService s3FileService;
     private final PermissionService permissionService;
+    private final ChildDedicationRepository childDedicationRepository;
+    private final MarriageCertificateRepository marriageCertificateRepository;
+    private final ReportRepository reportRepository;
+    private final TravelFormRepository travelFormRepository;
 
     // Get system user for automated operations
     public User getSystemUser() {
@@ -400,6 +412,67 @@ public class UserService {
         user.setReviewTagReason(null);
         user.setReviewTaggedAt(null);
         userRepository.save(user);
+    }
+
+    // Collect a personnel member's records (travel, child, marriage, reports) for admin review
+    @Transactional(readOnly = true)
+    public PersonnelRecordsResponse getPersonnelRecords(Long userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        List<Map<String, Object>> travels = travelFormRepository.findByUserIdOrderBySubmittedAtDesc(userId).stream()
+                .map(t -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", t.getId());
+                    m.put("type", "travel");
+                    m.put("title", "Travel to " + t.getCountry());
+                    m.put("subtitle", t.getCountry());
+                    m.put("detail", t.getReason());
+                    m.put("status", t.getStatus());
+                    m.put("submittedAt", t.getSubmittedAt());
+                    return m;
+                }).collect(Collectors.toList());
+
+        List<Map<String, Object>> children = childDedicationRepository.findByUserIdOrderBySubmittedAtDesc(userId).stream()
+                .map(c -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", c.getId());
+                    m.put("type", "child");
+                    m.put("title", "Child Dedication - " + c.getChildName());
+                    m.put("subtitle", c.getParentName());
+                    m.put("detail", c.getCampus());
+                    m.put("status", c.getStatus());
+                    m.put("submittedAt", c.getSubmittedAt());
+                    return m;
+                }).collect(Collectors.toList());
+
+        List<Map<String, Object>> marriages = marriageCertificateRepository.findByUserIdOrderBySubmittedAtDesc(userId).stream()
+                .map(c -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", c.getId());
+                    m.put("type", "marriage");
+                    m.put("title", (c.getGroomName() != null ? c.getGroomName() : "") + " & " + (c.getBrideName() != null ? c.getBrideName() : ""));
+                    m.put("subtitle", c.getCampus());
+                    m.put("detail", c.getMarriageDate());
+                    m.put("status", c.getStatus());
+                    m.put("submittedAt", c.getSubmittedAt());
+                    return m;
+                }).collect(Collectors.toList());
+
+        List<Map<String, Object>> reports = reportRepository.findByCreatedBy(userId).stream()
+                .map(r -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", r.getId());
+                    m.put("type", "report");
+                    m.put("title", "Report - " + (r.getCountry() != null ? r.getCountry() : "General"));
+                    m.put("subtitle", r.getCampus());
+                    m.put("detail", r.getSummary());
+                    m.put("status", r.getStatus());
+                    m.put("submittedAt", r.getCreatedAt());
+                    return m;
+                }).collect(Collectors.toList());
+
+        return new PersonnelRecordsResponse(travels, children, marriages, reports);
     }
 
     // Reset user password (Admin function)

@@ -59,20 +59,23 @@ public interface FormSubmissionRepository extends JpaRepository<FormSubmission, 
 
     // National leader scoping: submissions whose submitting user belongs to the
     // region, excluding submissions made by ADMIN / SUPER_ADMIN users.
+    // Also includes public (unauthenticated) submissions where user is null.
     @Query("SELECT fs FROM FormSubmission fs " +
            "WHERE fs.form = :form AND fs.archived = false " +
-           "AND fs.user.region = :region " +
-           "AND fs.user.id NOT IN (SELECT ur.user.id FROM UserRole ur " +
-           "    WHERE ur.isActive = true AND ur.role.name IN ('ADMIN','SUPER_ADMIN')) " +
+           "AND (fs.user IS NULL OR " +
+           "    (fs.user.region = :region AND fs.user.id NOT IN " +
+           "    (SELECT ur.user.id FROM UserRole ur " +
+           "        WHERE ur.isActive = true AND ur.role.name IN ('ADMIN','SUPER_ADMIN')))) " +
            "ORDER BY fs.submittedAt DESC")
     Page<FormSubmission> findByFormAndArchivedFalseAndUserRegionOrderBySubmittedAtDesc(
             @Param("form") Form form, @Param("region") String region, Pageable pageable);
 
     @Query("SELECT fs FROM FormSubmission fs " +
            "WHERE fs.archived = false " +
-           "AND fs.user.region = :region " +
-           "AND fs.user.id NOT IN (SELECT ur.user.id FROM UserRole ur " +
-           "    WHERE ur.isActive = true AND ur.role.name IN ('ADMIN','SUPER_ADMIN')) " +
+           "AND (fs.user IS NULL OR " +
+           "    (fs.user.region = :region AND fs.user.id NOT IN " +
+           "    (SELECT ur.user.id FROM UserRole ur " +
+           "        WHERE ur.isActive = true AND ur.role.name IN ('ADMIN','SUPER_ADMIN')))) " +
            "ORDER BY fs.submittedAt DESC")
     Page<FormSubmission> findByArchivedFalseAndUserRegionOrderBySubmittedAtDesc(
             @Param("region") String region, Pageable pageable);

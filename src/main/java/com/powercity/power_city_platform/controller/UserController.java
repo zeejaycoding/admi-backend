@@ -194,6 +194,15 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Personnel record review tag cleared"));
     }
 
+    @GetMapping("/{userId}/personnel-records")
+    @Operation(summary = "Get personnel records", description = "Get a personnel member's travel, child, marriage and report records (Admin, Super Admin, National Leader)")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
+    public ResponseEntity<ApiResponse<PersonnelRecordsResponse>> getPersonnelRecords(
+            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
+        PersonnelRecordsResponse records = userService.getPersonnelRecords(userId);
+        return ResponseEntity.ok(ApiResponse.success("Personnel records retrieved successfully", records));
+    }
+
     @GetMapping("/activity")
     @Operation(summary = "Get user activity", description = "Get detailed user activity for the authenticated user")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
