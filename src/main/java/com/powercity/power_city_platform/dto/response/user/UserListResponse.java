@@ -16,5 +16,9 @@ public record UserListResponse(
         Boolean isEmailVerified,
         Boolean createdByAdmin,
         LocalDateTime lastLogin,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Boolean flaggedForReview,
+        String reviewTagReason,
+        LocalDateTime reviewTaggedAt,
+        String campusName
 ) {}

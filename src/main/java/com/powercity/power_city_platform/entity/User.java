@@ -69,6 +69,15 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "created_by_admin", nullable = false)
     private Boolean createdByAdmin = false;
 
+    @Column(name = "flagged_for_review")
+    private Boolean flaggedForReview = false;
+
+    @Column(name = "review_tag_reason", length = 1000)
+    private String reviewTagReason;
+
+    @Column(name = "review_tagged_at")
+    private LocalDateTime reviewTaggedAt;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<UserRole> userRoles;
 
@@ -306,5 +315,29 @@ public class User extends BaseEntity implements UserDetails {
 
     public void setCreatedByAdmin(Boolean createdByAdmin) {
         this.createdByAdmin = createdByAdmin;
+    }
+
+    public Boolean getFlaggedForReview() {
+        return flaggedForReview;
+    }
+
+    public void setFlaggedForReview(Boolean flaggedForReview) {
+        this.flaggedForReview = flaggedForReview;
+    }
+
+    public String getReviewTagReason() {
+        return reviewTagReason;
+    }
+
+    public void setReviewTagReason(String reviewTagReason) {
+        this.reviewTagReason = reviewTagReason;
+    }
+
+    public LocalDateTime getReviewTaggedAt() {
+        return reviewTaggedAt;
+    }
+
+    public void setReviewTaggedAt(LocalDateTime reviewTaggedAt) {
+        this.reviewTaggedAt = reviewTaggedAt;
     }
 }

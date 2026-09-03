@@ -175,6 +175,25 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("User statistics retrieved successfully", stats));
     }
 
+    @PostMapping("/{userId}/tag-for-review")
+    @Operation(summary = "Tag user for review", description = "Flag a personnel record for Admin review (Admin, Super Admin, National Leader)")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
+    public ResponseEntity<ApiResponse<Void>> tagForReview(
+            @Parameter(description = "User ID", required = true) @PathVariable Long userId,
+            @Valid @RequestBody TagForReviewRequest request) {
+        userService.tagForReview(userId, request.reason());
+        return ResponseEntity.ok(ApiResponse.success("Personnel record tagged for review"));
+    }
+
+    @DeleteMapping("/{userId}/tag-for-review")
+    @Operation(summary = "Clear review tag", description = "Remove the review flag from a personnel record (Admin, Super Admin, National Leader)")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
+    public ResponseEntity<ApiResponse<Void>> clearReviewTag(
+            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
+        userService.clearReviewTag(userId);
+        return ResponseEntity.ok(ApiResponse.success("Personnel record review tag cleared"));
+    }
+
     @GetMapping("/activity")
     @Operation(summary = "Get user activity", description = "Get detailed user activity for the authenticated user")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")

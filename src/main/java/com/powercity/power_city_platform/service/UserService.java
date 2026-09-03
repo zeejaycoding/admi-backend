@@ -380,6 +380,28 @@ public class UserService {
         userRepository.save(user);
     }
 
+    // Tag a user record for admin review
+    public void tagForReview(Long userId, String reason) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setFlaggedForReview(true);
+        user.setReviewTagReason(reason);
+        user.setReviewTaggedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    // Clear the review tag from a user record
+    public void clearReviewTag(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setFlaggedForReview(false);
+        user.setReviewTagReason(null);
+        user.setReviewTaggedAt(null);
+        userRepository.save(user);
+    }
+
     // Reset user password (Admin function)
     public void resetUserPassword(Long userId, String newPassword) {
         User user = userRepository.findById(userId)
@@ -463,7 +485,11 @@ public class UserService {
                 user.getIsEmailVerified(),
                 user.getCreatedByAdmin() != null && user.getCreatedByAdmin(),
                 user.getLastLogin(),
-                user.getCreatedAt());
+                user.getCreatedAt(),
+                user.getFlaggedForReview() != null && user.getFlaggedForReview(),
+                user.getReviewTagReason(),
+                user.getReviewTaggedAt(),
+                resolveCampusName(user.getEmail()));
     }
 
     private RoleAssignmentResponse createRoleAssignmentResponse(UserRole userRole) {
