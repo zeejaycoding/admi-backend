@@ -3,6 +3,7 @@ package com.powercity.power_city_platform.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -22,6 +23,15 @@ public class S3Config {
 
     private static final Logger logger = LoggerFactory.getLogger(S3Config.class);
 
+    static {
+        // The default AWS credentials chain tries to reach the EC2 instance
+        // metadata service (169.254.169.254) and blocks for long network
+        // timeouts when no credentials are configured and no IAM role exists.
+        // Disabling it makes the fallback fail fast instead of stalling Spring
+        // Boot startup for minutes on every deploy/restart.
+        System.setProperty("aws.disabledEc2Metadata", "true");
+    }
+
     @Value("${aws.s3.access-key:${AWS_ACCESS_KEY_ID:}}")
     private String accessKey;
 
@@ -32,6 +42,7 @@ public class S3Config {
     private String region;
 
     @Bean
+    @Lazy
     public S3Client s3Client() {
         logger.info("Configuring S3Client with region: {}", region);
         logger.info("Access key configured: {}", !accessKey.isEmpty());
@@ -71,6 +82,7 @@ public class S3Config {
     }
 
     @Bean
+    @Lazy
     public S3Presigner s3Presigner() {
         if (accessKey.isEmpty() || secretKey.isEmpty()) {
             logger.warn("Using default credentials chain for S3Presigner");

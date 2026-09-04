@@ -8,6 +8,7 @@ import com.powercity.power_city_platform.entity.User;
 import com.powercity.power_city_platform.entity.UserRole;
 import com.powercity.power_city_platform.exception.ResourceNotFoundException;
 import com.powercity.power_city_platform.entity.ChildDedication;
+import com.powercity.power_city_platform.entity.MarriageCertificate;
 import com.powercity.power_city_platform.repository.ChildDedicationRepository;
 import com.powercity.power_city_platform.repository.MarriageCertificateRepository;
 import com.powercity.power_city_platform.repository.TravelFormRepository;
@@ -61,9 +62,8 @@ public class TravelFormService {
             forms = travelFormRepository.findAllByOrderBySubmittedAtDesc();
         } else if (isNationalLeader(currentUser)) {
             forms = travelFormRepository.findByRegionForNationalLeader(currentUser.getRegion());
-        } else if (isCoordinatorOrNationalLeader(currentUser)) {
-            forms = travelFormRepository.findByUserIdOrSameCampusCoordinators(
-                    currentUser.getId(), resolveCampus(currentUser));
+        } else if (isCoordinator(currentUser)) {
+            forms = travelFormRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
         } else {
             forms = travelFormRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
         }
@@ -83,8 +83,7 @@ public class TravelFormService {
                 && !form.getUser().getId().equals(currentUser.getId())
                 && !(isNationalLeader(currentUser)
                         && currentUser.getRegion() != null
-                        && currentUser.getRegion().equalsIgnoreCase(form.getUser().getRegion()))
-                && !(isCoordinator(currentUser) && isSameCampusForm(currentUser, form))) {
+                        && currentUser.getRegion().equalsIgnoreCase(form.getUser().getRegion()))) {
             throw new RuntimeException("Access denied");
         }
 
@@ -126,8 +125,7 @@ public class TravelFormService {
                 && !(isNationalLeader(currentUser)
                         && currentUser.getRegion() != null
                         && form.getUser() != null
-                        && currentUser.getRegion().equalsIgnoreCase(form.getUser().getRegion()))
-                && !(isCoordinator(currentUser) && isSameCampusForm(currentUser, form))) {
+                        && currentUser.getRegion().equalsIgnoreCase(form.getUser().getRegion()))) {
             throw new RuntimeException("Access denied");
         }
 
@@ -148,8 +146,7 @@ public class TravelFormService {
         List<TravelForm> pendingTravelForms;
 
         if (scoped && isCoordinatorUser) {
-            List<TravelForm> scopedList = travelFormRepository.findByUserIdOrSameCampusCoordinators(
-                    currentUser.getId(), campusScope);
+            List<TravelForm> scopedList = travelFormRepository.findByUserId(currentUser.getId());
             totalTravel = scopedList.size();
             pendingTravelCount = scopedList.stream()
                     .filter(f -> "Pending".equalsIgnoreCase(f.getStatus())).count();
@@ -185,8 +182,7 @@ public class TravelFormService {
 
         List<ChildDedication> recentChildren;
         if (scoped && isCoordinatorUser) {
-            recentChildren = childDedicationRepository.findByUserIdOrSameCampusCoordinators(
-                    currentUser.getId(), campusScope);
+            recentChildren = childDedicationRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
         } else if (scoped) {
             recentChildren = childDedicationRepository.findRecentByCampus(campusScope);
         } else {
@@ -218,8 +214,7 @@ public class TravelFormService {
 
         List<ChildDedication> pendingChildren;
         if (scoped && isCoordinatorUser) {
-            pendingChildren = childDedicationRepository.findByUserIdOrSameCampusCoordinators(
-                    currentUser.getId(), campusScope).stream()
+            pendingChildren = childDedicationRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId()).stream()
                     .filter(cd -> "Pending".equalsIgnoreCase(cd.getStatus())).toList();
         } else if (scoped) {
             pendingChildren = childDedicationRepository.findPendingApprovalsByCampus(campusScope);
@@ -243,9 +238,9 @@ public class TravelFormService {
         int childApproved;
 
         if (scoped && isCoordinatorUser) {
-            childTotal = (int) childDedicationRepository.countByUserIdOrSameCampusCoordinators(currentUser.getId(), campusScope);
-            childPending = (int) childDedicationRepository.countByUserIdOrSameCampusCoordinatorsAndStatus(currentUser.getId(), campusScope, "Pending");
-            childApproved = (int) childDedicationRepository.countByUserIdOrSameCampusCoordinatorsAndStatus(currentUser.getId(), campusScope, "Approved");
+            childTotal = (int) childDedicationRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId()).size();
+            childPending = (int) childDedicationRepository.countByUserIdAndStatus(currentUser.getId(), "Pending");
+            childApproved = (int) childDedicationRepository.countByUserIdAndStatus(currentUser.getId(), "Approved");
         } else if (scoped) {
             childTotal = (int) childDedicationRepository.countByUserOrCampus(currentUser.getId(), campusScope);
             childPending = (int) childDedicationRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Pending");
@@ -261,9 +256,13 @@ public class TravelFormService {
         int marriageApproved;
 
         if (scoped && isCoordinatorUser) {
-            marriageTotal = (int) marriageCertificateRepository.countByUserIdOrSameCampusCoordinators(currentUser.getId(), campusScope);
-            marriagePending = (int) marriageCertificateRepository.countByUserIdOrSameCampusCoordinatorsAndStatus(currentUser.getId(), campusScope, "Pending");
-            marriageApproved = (int) marriageCertificateRepository.countByUserIdOrSameCampusCoordinatorsAndStatus(currentUser.getId(), campusScope, "Approved");
+            List<MarriageCertificate> ownMarriages = marriageCertificateRepository
+                    .findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
+            marriageTotal = ownMarriages.size();
+            marriagePending = (int) ownMarriages.stream()
+                    .filter(m -> "Pending".equalsIgnoreCase(m.getStatus())).count();
+            marriageApproved = (int) ownMarriages.stream()
+                    .filter(m -> "Approved".equalsIgnoreCase(m.getStatus())).count();
         } else if (scoped) {
             marriageTotal = (int) marriageCertificateRepository.countByUserOrCampus(currentUser.getId(), campusScope);
             marriagePending = (int) marriageCertificateRepository.countByUserOrCampusAndStatus(currentUser.getId(), campusScope, "Pending");
@@ -330,15 +329,6 @@ public class TravelFormService {
                 });
     }
 
-    private boolean isCoordinatorOrNationalLeader(User user) {
-        return user.getUserRoles().stream()
-                .filter(UserRole::getIsActive)
-                .anyMatch(ur -> {
-                    String role = ur.getRole().getName();
-                    return role.equals("COORDINATOR") || role.equals("NATIONAL_LEADER");
-                });
-    }
-
     private boolean isNationalLeader(User user) {
         return user.getUserRoles().stream()
                 .filter(UserRole::getIsActive)
@@ -368,25 +358,5 @@ public class TravelFormService {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    private boolean isSameCampusForm(User user, TravelForm form) {
-        if (form.getUser() == null || isNationalLeader(user) || isAdmin(user)) {
-            return false;
-        }
-        if (form.getUser().getId().equals(user.getId())) {
-            return true;
-        }
-        boolean submitterIsCoordinator = form.getUser().getUserRoles().stream()
-                .filter(UserRole::getIsActive)
-                .anyMatch(ur -> ur.getRole().getName().equals("COORDINATOR"));
-        if (!submitterIsCoordinator) {
-            return false;
-        }
-        String campus = resolveCampus(user);
-        if (campus == null) {
-            return false;
-        }
-        return campus.equalsIgnoreCase(resolveCampus(form.getUser()));
     }
 }

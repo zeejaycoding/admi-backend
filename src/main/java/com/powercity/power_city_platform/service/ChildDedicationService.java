@@ -60,9 +60,8 @@ public class ChildDedicationService {
             dedications = childDedicationRepository.findAllByOrderBySubmittedAtDesc();
         } else if (isNationalLeader(currentUser)) {
             dedications = childDedicationRepository.findByRegionForNationalLeader(currentUser.getRegion());
-        } else if (isNationalLeaderOrCoordinator(currentUser)) {
-            dedications = childDedicationRepository.findByUserIdOrSameCampusCoordinators(
-                    currentUser.getId(), userService.resolveCampusName(currentUser.getEmail()));
+        } else if (isCoordinator(currentUser)) {
+            dedications = childDedicationRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
         } else {
             dedications = childDedicationRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
         }
@@ -215,12 +214,12 @@ public class ChildDedicationService {
                 });
     }
 
-    private boolean isNationalLeaderOrCoordinator(User user) {
+    private boolean isCoordinator(User user) {
         return user.getUserRoles().stream()
                 .filter(UserRole::getIsActive)
                 .anyMatch(ur -> {
                     String role = ur.getRole().getName();
-                    return role.equals("NATIONAL_LEADER") || role.equals("COORDINATOR");
+                    return role.equals("COORDINATOR");
                 });
     }
 
@@ -235,37 +234,17 @@ public class ChildDedicationService {
 
     private boolean canAccess(User user, ChildDedication dedication) {
         if (isSuperAdminOrAdmin(user)) return true;
-        if (isNationalLeaderOrCoordinator(user)) {
+        if (isCoordinator(user)) {
+            return dedication.getUser() != null
+                    && dedication.getUser().getId().equals(user.getId());
+        }
+        if (isNationalLeader(user)) {
             boolean isCreator = dedication.getUser() != null
                     && dedication.getUser().getId().equals(user.getId());
-            if (isCreator) return true;
-            if (isNationalLeader(user)) {
-                return user.getRegion() != null
-                        && dedication.getUser() != null
-                        && user.getRegion().equalsIgnoreCase(dedication.getUser().getRegion());
-            }
-            return isSameCampusDedication(user, dedication);
+            return isCreator || (user.getRegion() != null
+                    && dedication.getUser() != null
+                    && user.getRegion().equalsIgnoreCase(dedication.getUser().getRegion()));
         }
         return dedication.getUser().getId().equals(user.getId());
-    }
-
-    private boolean isSameCampusDedication(User user, ChildDedication dedication) {
-        if (dedication.getUser() == null) {
-            return false;
-        }
-        if (dedication.getUser().getId().equals(user.getId())) {
-            return true;
-        }
-        boolean submitterIsCoordinator = dedication.getUser().getUserRoles().stream()
-                .filter(UserRole::getIsActive)
-                .anyMatch(ur -> ur.getRole().getName().equals("COORDINATOR"));
-        if (!submitterIsCoordinator) {
-            return false;
-        }
-        String campus = userService.resolveCampusName(user.getEmail());
-        if (campus == null) {
-            return false;
-        }
-        return campus.equalsIgnoreCase(userService.resolveCampusName(dedication.getUser().getEmail()));
     }
 }

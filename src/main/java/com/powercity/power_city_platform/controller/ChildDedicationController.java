@@ -82,7 +82,7 @@ public class ChildDedicationController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER') or hasRole('COORDINATOR')")
     @Operation(summary = "Delete child dedication", description = "Delete a child dedication certificate")
     public ResponseEntity<ApiResponse<Void>> deleteDedication(@PathVariable Long id) {
         try {

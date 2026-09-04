@@ -69,9 +69,8 @@ public class MarriageCertificateService {
             certificates = marriageCertificateRepository.findAllByOrderBySubmittedAtDesc();
         } else if (isNationalLeader(currentUser)) {
             certificates = marriageCertificateRepository.findByRegionForNationalLeader(currentUser.getRegion());
-        } else if (isNationalLeaderOrCoordinator(currentUser)) {
-            certificates = marriageCertificateRepository.findByUserIdOrSameCampusCoordinators(
-                    currentUser.getId(), userService.resolveCampusName(currentUser.getEmail()));
+        } else if (isCoordinator(currentUser)) {
+            certificates = marriageCertificateRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
         } else {
             certificates = marriageCertificateRepository.findByUserIdOrderBySubmittedAtDesc(currentUser.getId());
         }
@@ -93,10 +92,7 @@ public class MarriageCertificateService {
                 && currentUser.getRegion() != null
                 && certificate.getUser() != null
                 && currentUser.getRegion().equalsIgnoreCase(certificate.getUser().getRegion());
-        boolean sameCampus = !isNationalLeader(currentUser)
-                && !isSuperAdminOrAdmin(currentUser)
-                && isSameCampusCertificate(currentUser, certificate);
-        if (!isSuperAdminOrAdmin(currentUser) && !isCreator && !sameRegion && !sameCampus) {
+        if (!isSuperAdminOrAdmin(currentUser) && !isCreator && !sameRegion) {
             throw new RuntimeException("Access denied");
         }
 
@@ -114,10 +110,7 @@ public class MarriageCertificateService {
                 && currentUser.getRegion() != null
                 && certificate.getUser() != null
                 && currentUser.getRegion().equalsIgnoreCase(certificate.getUser().getRegion());
-        boolean sameCampus = !isNationalLeader(currentUser)
-                && !isSuperAdminOrAdmin(currentUser)
-                && isSameCampusCertificate(currentUser, certificate);
-        if (!isSuperAdminOrAdmin(currentUser) && !isCreator && !sameRegion && !sameCampus) {
+        if (!isSuperAdminOrAdmin(currentUser) && !isCreator && !sameRegion) {
             throw new RuntimeException("Access denied");
         }
 
@@ -238,15 +231,6 @@ public class MarriageCertificateService {
                 });
     }
 
-    private boolean isNationalLeaderOrCoordinator(User user) {
-        return user.getUserRoles().stream()
-                .filter(UserRole::getIsActive)
-                .anyMatch(ur -> {
-                    String role = ur.getRole().getName();
-                    return role.equals("NATIONAL_LEADER") || role.equals("COORDINATOR");
-                });
-    }
-
     private boolean isNationalLeader(User user) {
         return user.getUserRoles().stream()
                 .filter(UserRole::getIsActive)
@@ -256,23 +240,12 @@ public class MarriageCertificateService {
                 });
     }
 
-    private boolean isSameCampusCertificate(User user, MarriageCertificate certificate) {
-        if (certificate.getUser() == null || isNationalLeader(user) || isSuperAdminOrAdmin(user)) {
-            return false;
-        }
-        if (certificate.getUser().getId().equals(user.getId())) {
-            return true;
-        }
-        boolean submitterIsCoordinator = certificate.getUser().getUserRoles().stream()
+    private boolean isCoordinator(User user) {
+        return user.getUserRoles().stream()
                 .filter(UserRole::getIsActive)
-                .anyMatch(ur -> ur.getRole().getName().equals("COORDINATOR"));
-        if (!submitterIsCoordinator) {
-            return false;
-        }
-        String campus = userService.resolveCampusName(user.getEmail());
-        if (campus == null) {
-            return false;
-        }
-        return campus.equalsIgnoreCase(userService.resolveCampusName(certificate.getUser().getEmail()));
+                .anyMatch(ur -> {
+                    String role = ur.getRole().getName();
+                    return role.equals("COORDINATOR");
+                });
     }
 }

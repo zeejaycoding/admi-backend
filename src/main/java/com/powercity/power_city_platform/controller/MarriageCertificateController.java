@@ -73,7 +73,7 @@ public class MarriageCertificateController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('NATIONAL_LEADER') or hasRole('COORDINATOR')")
     @Operation(summary = "Delete marriage certificate", description = "Delete a marriage certificate")
     public ResponseEntity<ApiResponse<Void>> deleteCertificate(@PathVariable Long id) {
         try {
