@@ -178,8 +178,7 @@ public class ReportService {
             reports = reportRepository.findByRegionForNationalLeader(
                     currentUser.getId(), currentUser.getRegion());
         } else if (isCoordinator(currentUser)) {
-            reports = reportRepository.findByCreatedByOrSameCampusCoordinators(
-                    currentUser.getId(), resolveCampusName(currentUser));
+            reports = reportRepository.findByCreatedBy(currentUser.getId());
         } else {
             return Collections.emptyList();
         }
@@ -200,9 +199,7 @@ public class ReportService {
                     && report.getCreatedBy().equals(currentUser.getId());
             boolean sameRegion = currentUser.getRegion() != null
                     && currentUser.getRegion().equalsIgnoreCase(report.getCountry());
-            if (!isCreator
-                    && !(isNationalLeader(currentUser) && sameRegion)
-                    && !(isCoordinator(currentUser) && isSameCampusReport(currentUser, report))) {
+            if (!isCreator && !(isNationalLeader(currentUser) && sameRegion)) {
                 throw new RuntimeException("Unauthorized access to this report");
             }
         }
@@ -249,9 +246,7 @@ public class ReportService {
                     && report.getCreatedBy().equals(currentUser.getId());
             boolean sameRegion = currentUser.getRegion() != null
                     && currentUser.getRegion().equalsIgnoreCase(report.getCountry());
-            if (!isCreator
-                    && !(isNationalLeader(currentUser) && sameRegion)
-                    && !(isCoordinator(currentUser) && isSameCampusReport(currentUser, report))) {
+            if (!isCreator && !(isNationalLeader(currentUser) && sameRegion)) {
                 throw new RuntimeException("Unauthorized to edit this report");
             }
         }
@@ -289,9 +284,7 @@ public class ReportService {
                     && report.getCreatedBy().equals(currentUser.getId());
             boolean sameRegion = currentUser.getRegion() != null
                     && currentUser.getRegion().equalsIgnoreCase(report.getCountry());
-            if (!isCreator
-                    && !(isNationalLeader(currentUser) && sameRegion)
-                    && !(isCoordinator(currentUser) && isSameCampusReport(currentUser, report))) {
+            if (!isCreator && !(isNationalLeader(currentUser) && sameRegion)) {
                 throw new RuntimeException("Unauthorized access to delete this report");
             }
         }
