@@ -3,6 +3,7 @@ package com.powercity.power_city_platform.service;
 import com.powercity.power_city_platform.entity.*;
 import com.powercity.power_city_platform.exception.ResourceNotFoundException;
 import com.powercity.power_city_platform.repository.ReportRepository;
+import com.powercity.power_city_platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class ReportService {
     private final S3FileService s3FileService;
     private final EntityManager entityManager;
     private final UserService userService;
+    private final UserRepository userRepository;
 
     private String resolveCampusName(User user) {
         if (user == null || user.getEmail() == null || user.getEmail().isBlank()) {
@@ -64,6 +66,47 @@ public class ReportService {
     private boolean isNationalLeader(User user) {
         return user.getUserRoles().stream()
                 .anyMatch(ur -> ur.getIsActive() && ur.getRole().getName().equals("NATIONAL_LEADER"));
+    }
+
+    private void resolveCreatorNames(List<Report> reports) {
+        if (reports == null || reports.isEmpty()) {
+            return;
+        }
+        Set<Long> creatorIds = new LinkedHashSet<>();
+        for (Report r : reports) {
+            if (r.getCreatedBy() != null) {
+                creatorIds.add(r.getCreatedBy());
+            }
+        }
+        if (creatorIds.isEmpty()) {
+            return;
+        }
+        Map<Long, User> usersById = new HashMap<>();
+        for (User u : userRepository.findAllById(creatorIds)) {
+            usersById.put(u.getId(), u);
+        }
+        for (Report r : reports) {
+            if (r.getCreatedBy() == null) {
+                continue;
+            }
+            User creator = usersById.get(r.getCreatedBy());
+            if (creator == null) {
+                r.setSubmittedBy(null);
+                continue;
+            }
+            String display = creator.getFullName();
+            if (display == null || display.isBlank()) {
+                display = creator.getEmail();
+            }
+            r.setSubmittedBy(display);
+        }
+    }
+
+    private void resolveCreatorName(Report report) {
+        if (report == null) {
+            return;
+        }
+        resolveCreatorNames(java.util.Collections.singletonList(report));
     }
 
     public Report createReport(
@@ -119,6 +162,9 @@ public class ReportService {
 
         report.setCreatedBy(currentUser.getId());
         report.setUpdatedBy(currentUser.getId());
+        String creatorName = currentUser.getFullName();
+        report.setSubmittedBy(creatorName != null && !creatorName.isBlank()
+                ? creatorName : currentUser.getEmail());
 
         if (rawExpenses != null) {
             for (Map<String, Object> expenseMap : rawExpenses) {
@@ -187,6 +233,7 @@ public class ReportService {
             Hibernate.initialize(r.getExpenses());
             Hibernate.initialize(r.getReceipts());
         }
+        resolveCreatorNames(reports);
         return reports;
     }
 
@@ -205,6 +252,7 @@ public class ReportService {
         }
         Hibernate.initialize(report.getExpenses());
         Hibernate.initialize(report.getReceipts());
+        resolveCreatorName(report);
         return report;
     }
 
@@ -228,6 +276,7 @@ public class ReportService {
         Report updated = reportRepository.save(report);
         Hibernate.initialize(updated.getExpenses());
         Hibernate.initialize(updated.getReceipts());
+        resolveCreatorName(updated);
         return updated;
     }
 
@@ -272,6 +321,7 @@ public class ReportService {
 
         Hibernate.initialize(updated.getExpenses());
         Hibernate.initialize(updated.getReceipts());
+        resolveCreatorName(updated);
         return updated;
     }
 
