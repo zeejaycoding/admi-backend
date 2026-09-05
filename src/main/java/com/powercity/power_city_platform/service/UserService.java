@@ -351,6 +351,15 @@ public class UserService {
             throw new RuntimeException("User already has this role");
         }
 
+        // A user can hold only one role at a time: deactivate all existing active roles
+        for (UserRole existing : userRoleRepository.findActiveRolesByUserId(targetUser.getId())) {
+            if (!existing.getRole().getName().equals(role.getName())) {
+                existing.setIsActive(false);
+                existing.setUpdatedBy(currentUser.getId());
+                userRoleRepository.save(existing);
+            }
+        }
+
         // Create role assignment
         UserRole userRole = new UserRole(targetUser, role);
         userRole.setCreatedBy(currentUser.getId());
